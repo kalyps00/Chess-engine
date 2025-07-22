@@ -1,16 +1,20 @@
 #ifndef TYPES_HPP
 #define TYPES_HPP
-enum PieceType
+enum PieceIndex
 {
-    NONE = 0,
-    PAWN = 1,
-    KNIGHT = 2,
-    BISHOP = 4,
-    ROOK = 8,
-    QUEEN = 16,
-    KING = 32,
-    WHITE = 64,
-    BLACK = 128
+    EMPTY = 0,
+    WHITE_PAWN = 1,
+    WHITE_KNIGHT = 2,
+    WHITE_BISHOP = 3,
+    WHITE_ROOK = 4,
+    WHITE_QUEEN = 5,
+    WHITE_KING = 6,
+    BLACK_PAWN = 7,
+    BLACK_KNIGHT = 8,
+    BLACK_BISHOP = 9,
+    BLACK_ROOK = 10,
+    BLACK_QUEEN = 11,
+    BLACK_KING = 12
 };
 // clang-format off
     enum Square {

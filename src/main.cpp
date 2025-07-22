@@ -1,7 +1,9 @@
 #include "GameControler.hpp"
-#include <SFML/Graphics.hpp>
 #include <iostream>
 
 int main()
 {
+    GameControler controler;
+    controler.run();
+    return 0;
 }

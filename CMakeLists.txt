@@ -28,15 +28,22 @@ set(ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
 set(SOURCES
     ${SRC_DIR}/main.cpp
     # Model - logika gry
+    ${SRC_DIR}/model/Board.cpp
     # View - interfejs graficzny
+    ${SRC_DIR}/view/BoardRender.cpp
     # Controller - kontrola gry
+    ${SRC_DIR}/controller/GameControler.cpp
 )
 
 # Lista plików nagłówkowych (.h) - dla IDE i IntelliSense
 set(HEADERS
     # Model headers
+    ${SRC_DIR}/model/Board.hpp
+    ${SRC_DIR}/model/Types.hpp
     # View headers  
+    ${SRC_DIR}/view/BoardRender.hpp
     # Controller headers
+    ${SRC_DIR}/controller/GameControler.hpp
 )
 
 # Tworzenie pliku wykonywalnego z podanych źródeł

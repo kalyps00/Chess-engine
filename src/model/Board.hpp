@@ -1,7 +1,6 @@
 #ifndef BOARD_HPP
 #define BOARD_HPP
 #include <string>
-#include "Move.hpp"
 #include <Types.hpp>
 class Board
 {
