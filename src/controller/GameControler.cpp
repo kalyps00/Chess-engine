@@ -1,6 +1,6 @@
 #include "GameControler.hpp"
 
-GameControler::GameControler() : window(sf::VideoMode(1000, 1000), "Chess"),
+GameControler::GameControler() : window(sf::VideoMode(720, 720), "Chess"),
                                  view(), board()
 {
     window.setFramerateLimit(60);

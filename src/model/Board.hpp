@@ -5,7 +5,8 @@
 class Board
 {
 private:
-    // Engine part - bitboards
+    // add bitboards array
+    //  Engine part - bitboards
 
     //  white pices bitboards
     long long
@@ -34,10 +35,11 @@ private:
 
     // View part
     int board_arr[64];
-    int get_piece_at(int pos);
 
 public:
     Board();
+    int get_piece_at(int pos);
+    void load_starting_position();
     void load_fen_position(std::string fen);
     void make_move();
     void undo_move();

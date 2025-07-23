@@ -8,8 +8,10 @@ class BoardRender
 {
 private:
     void draw_squares(sf::RenderWindow &window);
+    sf::Sprite piece_sprite[12 + 1];
 
 public:
-    void draw_board(sf::RenderWindow &window, Board &board);
+    void
+    draw_board(sf::RenderWindow &window, Board &board);
 };
 #endif
