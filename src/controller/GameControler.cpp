@@ -8,21 +8,25 @@ GameControler::GameControler() : window(sf::VideoMode(800, 800), "Chess"),
 
 void GameControler::run()
 {
-    sf::Event event;
     while (window.isOpen())
     {
-        if (window.waitEvent(event))
-        {
-            handleEvent(event);
-            render();
-        }
+        handleEvents();
+        render();
     }
 }
 
-void GameControler::handleEvent(sf::Event event)
+void GameControler::handleEvents()
 {
-    if (event.type == sf::Event::Closed)
-        window.close();
+    sf::Event event;
+    while (window.pollEvent(event))
+    {
+        if (event.type == sf::Event::Closed)
+            window.close();
+
+        if (event.type == sf::Event::MouseButtonPressed)
+        {
+                }
+    }
 }
 void GameControler::render()
 {
