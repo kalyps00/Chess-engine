@@ -8,7 +8,7 @@ private:
     Board board;
     BoardRender view;
     void render();
-    void handleEvents();
+    void handleEvent(sf::Event event);
 
 public:
     GameControler();

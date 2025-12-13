@@ -93,3 +93,9 @@ add_custom_target(clean-all
     COMMAND ${CMAKE_BUILD_TOOL} clean
     COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_BINARY_DIR}
 )
+# Include directories
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${SRC_DIR}/model
+    ${SRC_DIR}/view
+    ${SRC_DIR}/controller
+)

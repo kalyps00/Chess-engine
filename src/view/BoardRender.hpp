@@ -9,9 +9,10 @@ class BoardRender
 private:
     void draw_squares(sf::RenderWindow &window);
     sf::Sprite piece_sprite[12 + 1];
+    sf::Texture chess_piece_texture;
 
 public:
-    void
-    draw_board(sf::RenderWindow &window, Board &board);
+    BoardRender();
+    void draw_board(sf::RenderWindow &window, Board &board);
 };
 #endif

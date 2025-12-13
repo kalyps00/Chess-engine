@@ -1,40 +1,22 @@
 #ifndef BOARD_HPP
 #define BOARD_HPP
 #include <string>
-#include <Types.hpp>
+#include "Types.hpp"
 class Board
 {
 private:
-    // add bitboards array
-    //  Engine part - bitboards
+    // Bitboard representation empty on 0, pieces 1-12
+    long long bitboards[13];
+    int board_arr[64];
 
-    //  white pices bitboards
-    long long
-        white_pawns,
-        white_knights,
-        white_bishops,
-        white_rooks,
-        white_queens,
-        white_king;
-    // black pices bitboards
-    long long
-        black_pawns,
-        black_knights,
-        black_bishops,
-        black_rooks,
-        black_queens,
-        black_king;
     // Additional bitboards
     long long
-        white_pieces,
-        black_pieces,
+        white_pieces, // 1-5
+        black_pieces, // 6-12
         all_pieces,
         empty_squares;
     // Game state
     bool white_to_move;
-
-    // View part
-    int board_arr[64];
 
 public:
     Board();
@@ -44,5 +26,6 @@ public:
     void make_move();
     void undo_move();
     bool get_current_player();
+    void set_bit(int square, int piece);
 };
 #endif

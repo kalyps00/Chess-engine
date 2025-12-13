@@ -1,28 +1,28 @@
 #include "GameControler.hpp"
 
-GameControler::GameControler() : window(sf::VideoMode(720, 720), "Chess"),
-                                 view(), board()
+GameControler::GameControler() : window(sf::VideoMode(800, 800), "Chess"),
+                                 board(), view()
 {
     window.setFramerateLimit(60);
 };
 
 void GameControler::run()
 {
+    sf::Event event;
     while (window.isOpen())
     {
-        handleEvents();
-        render();
+        if (window.waitEvent(event))
+        {
+            handleEvent(event);
+            render();
+        }
     }
 }
-void GameControler::handleEvents()
+
+void GameControler::handleEvent(sf::Event event)
 {
-    sf::Event event;
-    while (window.pollEvent(event))
-    {
-        if (event.type == sf::Event::Closed)
-            window.close();
-        // tbi mouseclick drag and drop etc
-    }
+    if (event.type == sf::Event::Closed)
+        window.close();
 }
 void GameControler::render()
 {
