@@ -37,10 +37,15 @@ BoardRender::BoardRender()
         }
     }
 }
-void BoardRender::draw_board(sf::RenderWindow &window, Board &board, int hide_square)
+void BoardRender::draw_board(sf::RenderWindow &window, Board &board, int hide_square, const std::vector<int> &highlight_squares)
 {
     sf::RectangleShape square;
     square.setSize(sf::Vector2f(SQUARE_SIZE, SQUARE_SIZE));
+
+    sf::CircleShape highlight(SQUARE_SIZE / 6);
+    highlight.setFillColor(sf::Color(100, 100, 100, 150));
+    highlight.setOrigin(highlight.getRadius(), highlight.getRadius());
+
     for (int rank = 0; rank < 8; rank++)
     {
         for (int file = 0; file < 8; file++)
@@ -58,6 +63,18 @@ void BoardRender::draw_board(sf::RenderWindow &window, Board &board, int hide_sq
             else
                 square.setFillColor(sf::Color(118, 150, 86));
             window.draw(square);
+
+            // highlight
+            for (int s : highlight_squares)
+            {
+                if (s == current_square)
+                {
+                    highlight.setPosition(file * SQUARE_SIZE + SQUARE_SIZE / 2, visual_rank * SQUARE_SIZE + SQUARE_SIZE / 2);
+                    window.draw(highlight);
+                    break;
+                }
+            }
+
             // dragged piece
             if (current_square == hide_square)
                 continue;

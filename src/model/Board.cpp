@@ -229,6 +229,12 @@ void Board::make_move(const Move &move)
     board_arr[source] = EMPTY;
     board_arr[destination] = piece;
 
+    int pieceToPlace = (move.promotion != 0) ? move.promotion : piece;
+
+    // Place piece at destination
+    bitboards[pieceToPlace] |= (1ULL << destination);
+    board_arr[destination] = pieceToPlace;
+
     white_to_move = !white_to_move;
     update_bitboards();
 }

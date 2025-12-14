@@ -29,6 +29,7 @@ set(SOURCES
     ${SRC_DIR}/main.cpp
     # Model - logika gry
     ${SRC_DIR}/model/Board.cpp
+    ${SRC_DIR}/model/MoveGenerator.cpp
     # View - interfejs graficzny
     ${SRC_DIR}/view/BoardRender.cpp
     # Controller - kontrola gry

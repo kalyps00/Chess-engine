@@ -45,6 +45,8 @@ void GameControler::handleEvents()
                             draggedPiece = piece;
                             draggedSquare = square;
                             currentMousePos = sf::Vector2i(x, y);
+
+                            validMoves = MoveGenerator::generate_moves(board);
                         }
                     }
                 }
@@ -65,9 +67,14 @@ void GameControler::handleEvents()
 
                     if (destSquare >= 0 && destSquare < 64)
                     {
-                        int capturedPiece = board.get_piece_at(destSquare);
-                        Move move(draggedSquare, destSquare, draggedPiece, capturedPiece);
-                        board.make_move(move);
+                        for (const auto &move : validMoves)
+                        {
+                            if (move.source == draggedSquare && move.target == destSquare)
+                            {
+                                board.make_move(move);
+                                break;
+                            }
+                        }
                     }
 
                     isDragging = false;
@@ -90,7 +97,19 @@ void GameControler::render()
 {
     window.clear(sf::Color(128, 128, 128));
 
-    view.draw_board(window, board, isDragging ? draggedSquare : -1);
+    std::vector<int> highlight_squares;
+    if (isDragging)
+    {
+        for (const auto &move : validMoves)
+        {
+            if (move.source == draggedSquare)
+            {
+                highlight_squares.push_back(move.target);
+            }
+        }
+    }
+
+    view.draw_board(window, board, isDragging ? draggedSquare : -1, highlight_squares);
 
     if (isDragging)
     {

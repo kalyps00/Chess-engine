@@ -1,6 +1,9 @@
 #include "Board.hpp"
 #include "BoardRender.hpp"
+#include "../model/MoveGenerator.hpp"
 #include <SFML/Graphics.hpp>
+#include <vector>
+
 class GameControler
 {
 private:
@@ -13,6 +16,7 @@ private:
     int draggedSquare = -1;
     int draggedPiece = 0;
     sf::Vector2i currentMousePos;
+    std::vector<Move> validMoves;
 
     void render();
     void handleEvents();
