@@ -45,11 +45,15 @@ void BoardRender::draw_board(sf::RenderWindow &window, Board &board, int hide_sq
     {
         for (int file = 0; file < 8; file++)
         {
+            // Logic: rank 0 is bottom (A1), rank 7 is top (A8)
+            // Visual: y=0 is top, y=max is bottom
+            // So visual_rank = 7 - logical_rank
             int current_square = 8 * rank + file;
+            int visual_rank = 7 - rank;
 
             // square
-            square.setPosition(file * SQUARE_SIZE, rank * SQUARE_SIZE);
-            if ((rank + file) % 2 == 0)
+            square.setPosition(file * SQUARE_SIZE, visual_rank * SQUARE_SIZE);
+            if ((rank + file) % 2 != 0)
                 square.setFillColor(sf::Color(238, 238, 210));
             else
                 square.setFillColor(sf::Color(118, 150, 86));
@@ -61,7 +65,7 @@ void BoardRender::draw_board(sf::RenderWindow &window, Board &board, int hide_sq
             int piece_type = board.get_piece_at(current_square);
             if (piece_type > 0 && piece_type <= 12)
             {
-                piece_sprite[piece_type].setPosition(file * SQUARE_SIZE, rank * SQUARE_SIZE);
+                piece_sprite[piece_type].setPosition(file * SQUARE_SIZE, visual_rank * SQUARE_SIZE);
                 window.draw(piece_sprite[piece_type]);
             }
         }
@@ -72,8 +76,6 @@ void BoardRender::draw_dragged_piece(sf::RenderWindow &window, int piece_type, s
 {
     if (piece_type > 0 && piece_type <= 12)
     {
-        // Center the piece on the mouse cursor
-        // We subtract half of the scaled size (SQUARE_SIZE / 2)
         piece_sprite[piece_type].setPosition(
             position.x - SQUARE_SIZE / 2,
             position.y - SQUARE_SIZE / 2);

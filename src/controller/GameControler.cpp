@@ -30,7 +30,7 @@ void GameControler::handleEvents()
                 int x = event.mouseButton.x;
                 int y = event.mouseButton.y;
                 int file = x / BoardRender::SQUARE_SIZE;
-                int rank = y / BoardRender::SQUARE_SIZE;
+                int rank = 7 - (y / BoardRender::SQUARE_SIZE); // Invert Y axis to have a1 at bottom
                 int square = rank * 8 + file;
 
                 if (square >= 0 && square < 64)
@@ -60,12 +60,14 @@ void GameControler::handleEvents()
                     int x = event.mouseButton.x;
                     int y = event.mouseButton.y;
                     int file = x / BoardRender::SQUARE_SIZE;
-                    int rank = y / BoardRender::SQUARE_SIZE;
+                    int rank = 7 - (y / BoardRender::SQUARE_SIZE); // Invert Y axis
                     int destSquare = rank * 8 + file;
 
                     if (destSquare >= 0 && destSquare < 64)
                     {
-                        board.make_move(draggedSquare, destSquare);
+                        int capturedPiece = board.get_piece_at(destSquare);
+                        Move move(draggedSquare, destSquare, draggedPiece, capturedPiece);
+                        board.make_move(move);
                     }
 
                     isDragging = false;

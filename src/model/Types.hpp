@@ -39,4 +39,21 @@ inline bool is_black_piece(int piece)
     a8, b8, c8, d8, e8, f8, g8, h8
     // clang-format on
 };
+
+struct Move
+{
+    int source;
+    int target;
+    int piece;
+    int captured;
+    int promotion; // 0 if no promotion
+
+    
+    Move() : source(0), target(0), piece(0), captured(0), promotion(0) {}
+
+    // Constructor for standard moves
+    Move(int src, int tgt, int p, int cap = 0, int prom = 0)
+        : source(src), target(tgt), piece(p), captured(cap), promotion(prom) {}
+};
+
 #endif
