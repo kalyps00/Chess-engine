@@ -36,12 +36,16 @@ void GameControler::handleEvents()
                 if (square >= 0 && square < 64)
                 {
                     int piece = board.get_piece_at(square);
-                    if (piece != 0)
+                    if (piece != EMPTY)
                     {
-                        isDragging = true;
-                        draggedPiece = piece;
-                        draggedSquare = square;
-                        currentMousePos = sf::Vector2i(x, y);
+                        bool isWhiteTurn = board.is_white_to_move();
+                        if ((isWhiteTurn && is_white_piece(piece)) || (!isWhiteTurn && is_black_piece(piece)))
+                        {
+                            isDragging = true;
+                            draggedPiece = piece;
+                            draggedSquare = square;
+                            currentMousePos = sf::Vector2i(x, y);
+                        }
                     }
                 }
             }
@@ -59,7 +63,6 @@ void GameControler::handleEvents()
                     int rank = y / BoardRender::SQUARE_SIZE;
                     int destSquare = rank * 8 + file;
 
-                    // Make the move if valid square
                     if (destSquare >= 0 && destSquare < 64)
                     {
                         board.make_move(draggedSquare, destSquare);

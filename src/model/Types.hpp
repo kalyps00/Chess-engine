@@ -16,6 +16,17 @@ enum PieceIndex
     BLACK_QUEEN = 11,
     BLACK_KING = 12
 };
+
+inline bool is_white_piece(int piece)
+{
+    return piece >= WHITE_PAWN && piece <= WHITE_KING;
+}
+
+inline bool is_black_piece(int piece)
+{
+    return piece >= BLACK_PAWN && piece <= BLACK_KING;
+}
+
 // clang-format off
     enum Square {
     a1, b1, c1, d1, e1, f1, g1, h1, 

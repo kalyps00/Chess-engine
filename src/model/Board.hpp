@@ -26,5 +26,6 @@ public:
     void make_move(int source, int destination);
     void undo_move();
     void set_bit(int square, int piece);
+    bool is_white_to_move() const { return white_to_move; }
 };
 #endif
