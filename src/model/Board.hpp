@@ -22,10 +22,9 @@ public:
     Board();
     int get_piece_at(int pos);
     void load_starting_position();
-    void load_fen_position(std::string fen);
-    void make_move();
+    // void load_fen_position(std::string fen);
+    void make_move(int source, int destination);
     void undo_move();
-    bool get_current_player();
     void set_bit(int square, int piece);
 };
 #endif

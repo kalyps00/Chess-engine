@@ -2,7 +2,7 @@
 
 Board::Board()
 {
-    // Clear bitboards and mailbox
+    // Clear bitboards and Board array
     for (int i = 0; i < 13; i++)
         bitboards[i] = 0ULL;
     for (int i = 0; i < 64; i++)
@@ -14,6 +14,7 @@ Board::Board()
     empty_squares = ~0ULL;
 
     load_starting_position();
+    white_to_move = true;
 }
 
 int Board::get_piece_at(int pos)
@@ -62,4 +63,24 @@ void Board::load_starting_position()
     // Black Pawns
     for (int i = 48; i < 56; i++)
         set_bit(i, BLACK_PAWN);
+}
+void Board::make_move(int source, int destination)
+{
+    int piece = board_arr[source];
+    int captured = board_arr[destination];
+
+    if (piece == EMPTY)
+        return;
+
+    long long move_mask = (1ULL << source) | (1ULL << destination);
+    bitboards[piece] ^= move_mask;
+
+    if (captured != EMPTY)
+    {
+        bitboards[captured] ^= (1ULL << destination);
+    }
+    board_arr[source] = EMPTY;
+    board_arr[destination] = piece;
+
+    white_to_move = !white_to_move;
 }
