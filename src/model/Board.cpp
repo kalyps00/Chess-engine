@@ -1,8 +1,8 @@
 #include "Board.hpp"
 
-long long Board::knight_attacks[64];
-long long Board::pawn_attacks[2][64];
-long long Board::king_attacks[64];
+Bitboard Board::knight_attacks[64];
+Bitboard Board::pawn_attacks[2][64];
+Bitboard Board::king_attacks[64];
 
 Board::Board()
 {
@@ -51,7 +51,7 @@ void Board::init_knight_attacks()
 {
     for (int square = 0; square < 64; square++)
     {
-        long long attacks = 0ULL;
+        Bitboard attacks = 0ULL;
         int rank = square / 8;
         int file = square % 8;
 
@@ -79,7 +79,7 @@ void Board::init_king_attacks()
 {
     for (int square = 0; square < 64; square++)
     {
-        long long attacks = 0ULL;
+        Bitboard attacks = 0ULL;
         int rank = square / 8;
         int file = square % 8;
 
@@ -101,10 +101,10 @@ void Board::init_king_attacks()
         king_attacks[square] = attacks;
     }
 }
-long long Board::get_rook_attacks(int square, long long occupied)
+Bitboard Board::get_rook_attacks(int square, Bitboard occupied)
 {
     int directions[4] = {8, -8, 1, -1}; // Up, Down, Right, Left
-    long long attacks = 0ULL;
+    Bitboard attacks = 0ULL;
 
     for (int dir = 0; dir < 4; dir++)
     {
@@ -129,10 +129,10 @@ long long Board::get_rook_attacks(int square, long long occupied)
     }
     return attacks;
 }
-long long Board::get_bishop_attacks(int square, long long occupied)
+Bitboard Board::get_bishop_attacks(int square, Bitboard occupied)
 {
     int directions[4] = {9, 7, -9, -7}; // Up-Right, Up-Left, Down-Right, Down-Left
-    long long attacks = 0ULL;
+    Bitboard attacks = 0ULL;
 
     for (int dir = 0; dir < 4; dir++)
     {
@@ -157,7 +157,7 @@ long long Board::get_bishop_attacks(int square, long long occupied)
     }
     return attacks;
 }
-long long Board::get_queen_attacks(int square, long long occupied)
+Bitboard Board::get_queen_attacks(int square, Bitboard occupied)
 {
     return get_rook_attacks(square, occupied) | get_bishop_attacks(square, occupied);
 }
@@ -171,7 +171,7 @@ int Board::get_piece_at(int pos)
 void Board::set_bit(int square, int piece)
 {
     // Update Bitboard
-    long long mask = 1ULL << square;
+    Bitboard mask = 1ULL << square;
     bitboards[piece] |= mask;
 
     // Update board array
@@ -234,7 +234,7 @@ void Board::make_move(const Move &move)
     board_arr[destination] = pieceToPlace;
 
     // ennpassant
-    long long old_enpassant_mask = enpassant_square;
+    Bitboard old_enpassant_mask = enpassant_square;
     enpassant_square = 0ULL;
 
     if (piece == WHITE_PAWN || piece == BLACK_PAWN)
@@ -246,7 +246,7 @@ void Board::make_move(const Move &move)
             enpassant_square = (1ULL << ep_square);
         }
         // Handle enpassant capture
-        else if ((1ULL << destination) == (unsigned long long)old_enpassant_mask)
+        else if ((1ULL << destination) == old_enpassant_mask)
         {
             int ep_capture_square = white_to_move ? (destination - 8) : (destination + 8);
             int ep_captured_piece = white_to_move ? BLACK_PAWN : WHITE_PAWN;

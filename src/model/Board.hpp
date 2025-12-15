@@ -11,21 +11,21 @@ class Board
 
 private:
     // Bitboard representation empty on 0, pieces 1-12
-    long long bitboards[13];
+    Bitboard bitboards[13];
     int board_arr[64];
 
     // Precomputed attack tables
-    static long long knight_attacks[64], pawn_attacks[2][64], king_attacks[64];
+    static Bitboard knight_attacks[64], pawn_attacks[2][64], king_attacks[64];
     // Initialization functions
     static void init_knight_attacks();
     static void init_pawn_attacks();
     static void init_king_attacks();
     // Sliding piece attack generation
-    long long get_rook_attacks(int square, long long occupied);
-    long long get_bishop_attacks(int square, long long occupied);
-    long long get_queen_attacks(int square, long long occupied);
+    Bitboard get_rook_attacks(int square, Bitboard occupied);
+    Bitboard get_bishop_attacks(int square, Bitboard occupied);
+    Bitboard get_queen_attacks(int square, Bitboard occupied);
     // Additional bitboards
-    long long
+    Bitboard
         white_pieces, // 1-5
         black_pieces, // 6-12
         all_pieces,

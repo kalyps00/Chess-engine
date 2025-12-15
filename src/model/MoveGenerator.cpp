@@ -16,11 +16,11 @@ void MoveGenerator::generate_pawn_moves(Board &board, std::vector<Move> &moves)
 {
     bool white_to_move = board.is_white_to_move();
     int pawn_type = white_to_move ? WHITE_PAWN : BLACK_PAWN;
-    long long pawns_mask = board.bitboards[pawn_type];
-    long long enemy_pieces_mask = white_to_move ? board.black_pieces : board.white_pieces;
+    Bitboard pawns_mask = board.bitboards[pawn_type];
+    Bitboard enemy_pieces_mask = white_to_move ? board.black_pieces : board.white_pieces;
     int direction = white_to_move ? 8 : -8;
-    long long start_mask = white_to_move ? (0xFFULL << 8) : (0xFFULL << 48);
-    long long promotion_rank_mask = white_to_move ? (0xFFULL << 56) : (0xFFULL << 0);
+    Bitboard start_mask = white_to_move ? (0xFFULL << 8) : (0xFFULL << 48);
+    Bitboard promotion_rank_mask = white_to_move ? (0xFFULL << 56) : (0xFFULL << 0);
 
     while (pawns_mask)
     {
@@ -49,8 +49,8 @@ void MoveGenerator::generate_pawn_moves(Board &board, std::vector<Move> &moves)
             }
         }
         // Captures
-        long long pawn_attacks_mask = Board::pawn_attacks[white_to_move ? 0 : 1][source_square];
-        long long capture_targets = pawn_attacks_mask & enemy_pieces_mask;
+        Bitboard pawn_attacks_mask = Board::pawn_attacks[white_to_move ? 0 : 1][source_square];
+        Bitboard capture_targets = pawn_attacks_mask & enemy_pieces_mask;
         while (capture_targets)
         {
             int attack_square = __builtin_ctzll(capture_targets);
@@ -72,7 +72,7 @@ void MoveGenerator::generate_pawn_moves(Board &board, std::vector<Move> &moves)
         }
         if (board.enpassant_square)
         {
-            long long ep_attacks = pawn_attacks_mask & board.enpassant_square;
+            Bitboard ep_attacks = pawn_attacks_mask & board.enpassant_square;
             if (ep_attacks)
             {
                 int ep_square = __builtin_ctzll(ep_attacks);
@@ -88,13 +88,13 @@ void MoveGenerator::generate_knight_moves(Board &board, std::vector<Move> &moves
 {
     bool white_to_move = board.white_to_move;
     int piece_type = white_to_move ? WHITE_KNIGHT : BLACK_KNIGHT;
-    long long knights_mask = board.bitboards[piece_type];
-    long long own_pieces_mask = white_to_move ? board.white_pieces : board.black_pieces;
+    Bitboard knights_mask = board.bitboards[piece_type];
+    Bitboard own_pieces_mask = white_to_move ? board.white_pieces : board.black_pieces;
 
     while (knights_mask)
     {
         int source_square = __builtin_ctzll(knights_mask);
-        long long attacks = Board::knight_attacks[source_square] & ~own_pieces_mask;
+        Bitboard attacks = Board::knight_attacks[source_square] & ~own_pieces_mask;
 
         while (attacks)
         {
@@ -110,13 +110,13 @@ void MoveGenerator::generate_king_moves(Board &board, std::vector<Move> &moves)
 {
     bool white_to_move = board.white_to_move;
     int piece_type = white_to_move ? WHITE_KING : BLACK_KING;
-    long long king_mask = board.bitboards[piece_type];
-    long long own_pieces_mask = white_to_move ? board.white_pieces : board.black_pieces;
+    Bitboard king_mask = board.bitboards[piece_type];
+    Bitboard own_pieces_mask = white_to_move ? board.white_pieces : board.black_pieces;
 
     if (king_mask)
     {
         int source_square = __builtin_ctzll(king_mask);
-        long long attacks = Board::king_attacks[source_square] & ~own_pieces_mask;
+        Bitboard attacks = Board::king_attacks[source_square] & ~own_pieces_mask;
 
         while (attacks)
         {
@@ -131,7 +131,7 @@ void MoveGenerator::generate_king_moves(Board &board, std::vector<Move> &moves)
 void MoveGenerator::generate_sliding_moves(Board &board, std::vector<Move> &moves)
 {
     bool white_to_move = board.white_to_move;
-    long long own_pieces_mask = white_to_move ? board.white_pieces : board.black_pieces;
+    Bitboard own_pieces_mask = white_to_move ? board.white_pieces : board.black_pieces;
 
     int piece_types[3] = {
         white_to_move ? WHITE_BISHOP : BLACK_BISHOP,
@@ -140,11 +140,11 @@ void MoveGenerator::generate_sliding_moves(Board &board, std::vector<Move> &move
 
     for (int piece_type : piece_types)
     {
-        long long pieces_mask = board.bitboards[piece_type];
+        Bitboard pieces_mask = board.bitboards[piece_type];
         while (pieces_mask)
         {
             int source_square = __builtin_ctzll(pieces_mask);
-            long long attacks = 0ULL;
+            Bitboard attacks = 0ULL;
 
             if (piece_type == WHITE_BISHOP || piece_type == BLACK_BISHOP)
                 attacks = board.get_bishop_attacks(source_square, board.all_pieces);

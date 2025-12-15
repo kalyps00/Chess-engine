@@ -1,5 +1,11 @@
 #ifndef TYPES_HPP
 #define TYPES_HPP
+
+#include <cstdint>
+
+// Alias for bitboards - makes code more readable and ensures 64-bit size
+using Bitboard = uint64_t;
+
 enum PieceIndex
 {
     EMPTY = 0,
