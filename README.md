@@ -21,17 +21,23 @@ A chess engine project written in modern C++17, utilizing **Bitboard** represent
 The project is divided into three main modules:
 
 ### 1. Model (`src/model`)
+
 Responsible for chess logic and game state storage. Independent of the graphics library.
+
 - **`Board`**: Stores game state on 12 bitboards (6 per color) + helper arrays. Contains move execution logic (`make_move`) and En Passant handling.
 - **`MoveGenerator`**: Static class generating a vector of available moves (`std::vector<Move>`) based on the current board state.
 - **`Types.hpp`**: Type definitions (`Bitboard`), enums (pieces, colors), and the `Move` structure.
 
 ### 2. View (`src/view`)
+
 Responsible solely for display.
+
 - **`BoardRender`**: Class using SFML to draw the board, pieces, and highlights. Converts logical coordinates (0-63) to pixels.
 
 ### 3. Controller (`src/controller`)
+
 Connects the Model with the View and handles user input.
+
 - **`GameControler`**: Main game loop. Handles mouse events (click, drag), requests move generation, and updates the model.
 
 ## 📋 Requirements
@@ -81,5 +87,9 @@ Chess-engine/
 - [x] En Passant
 - [ ] Castling
 - [ ] Check and Checkmate Detection
+- [ ] Choosing promotion piece
 - [ ] "Game Over" Logic
+- [ ] Choosing playing side
+- [ ] Loading position from fen
+- [ ] UCI
 - [ ] Simple AI (Minimax)
