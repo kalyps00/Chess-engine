@@ -99,3 +99,11 @@ void BoardRender::draw_dragged_piece(sf::RenderWindow &window, int piece_type, s
         window.draw(piece_sprite[piece_type]);
     }
 }
+int BoardRender::get_square_from_pixel(int x, int y)
+{
+    int file = x / SQUARE_SIZE;
+    int rank = 7 - (y / SQUARE_SIZE);
+    if (file < 0 || file > 7 || rank < 0 || rank > 7)
+        return -1;
+    return rank * 8 + file;
+}

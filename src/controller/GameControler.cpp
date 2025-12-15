@@ -27,11 +27,7 @@ void GameControler::handleEvents()
         {
             if (event.mouseButton.button == sf::Mouse::Left)
             {
-                int x = event.mouseButton.x;
-                int y = event.mouseButton.y;
-                int file = x / BoardRender::SQUARE_SIZE;
-                int rank = 7 - (y / BoardRender::SQUARE_SIZE); // Invert Y axis to have a1 at bottom
-                int square = rank * 8 + file;
+                int square = view.get_square_from_pixel(event.mouseButton.x, event.mouseButton.y);
 
                 if (square >= 0 && square < 64)
                 {
@@ -44,7 +40,7 @@ void GameControler::handleEvents()
                             isDragging = true;
                             draggedPiece = piece;
                             draggedSquare = square;
-                            currentMousePos = sf::Vector2i(x, y);
+                            currentMousePos = sf::Vector2i(event.mouseButton.x, event.mouseButton.y);
 
                             validMoves = MoveGenerator::generate_moves(board);
                         }
@@ -59,11 +55,7 @@ void GameControler::handleEvents()
             {
                 if (isDragging)
                 {
-                    int x = event.mouseButton.x;
-                    int y = event.mouseButton.y;
-                    int file = x / BoardRender::SQUARE_SIZE;
-                    int rank = 7 - (y / BoardRender::SQUARE_SIZE); // Invert Y axis
-                    int destSquare = rank * 8 + file;
+                    int destSquare = view.get_square_from_pixel(event.mouseButton.x, event.mouseButton.y);
 
                     if (destSquare >= 0 && destSquare < 64)
                     {
