@@ -32,6 +32,9 @@ private:
         empty_squares,
         enpassant_square;
     void update_bitboards();
+    int castling_rights; // bit 0: white king-side, bit 1: white queen-side, bit 2: black king-side, bit 3: black queen-side
+    void remove_castling_rights(int piece, int source);
+    bool is_square_attacked(int square, bool by_white);
     // Game state
     bool white_to_move;
 

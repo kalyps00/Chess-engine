@@ -85,7 +85,7 @@ Chess-engine/
 - [x] Basic Move Generator
 - [x] GUI and Mouse Handling
 - [x] En Passant
-- [ ] Castling
+- [x] Castling
 - [ ] Check and Checkmate Detection
 - [ ] Choosing promotion piece
 - [ ] "Game Over" Logic

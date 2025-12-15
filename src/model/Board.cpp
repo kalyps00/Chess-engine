@@ -12,6 +12,7 @@ Board::Board()
         init_knight_attacks();
         init_pawn_attacks();
         init_king_attacks();
+
         initialized = true;
     } // Clear bitboards and Board array
     for (int i = 0; i < 13; i++)
@@ -20,6 +21,7 @@ Board::Board()
         board_arr[i] = EMPTY;
 
     load_starting_position();
+    update_bitboards();
     white_to_move = true;
 }
 
@@ -207,7 +209,9 @@ void Board::load_starting_position()
     // Black Pawns
     for (int i = 48; i < 56; i++)
         set_bit(i, BLACK_PAWN);
-    update_bitboards();
+
+    // Initial castling rights
+    castling_rights = 0b1111; // All castling rights available at start
 }
 void Board::make_move(const Move &move)
 {
@@ -218,6 +222,29 @@ void Board::make_move(const Move &move)
 
     if (piece == EMPTY)
         return;
+    // remove castling rights if king or rook moves
+    if (piece == WHITE_KING)
+    {
+        castling_rights &= ~0b0011;
+    }
+    else if (piece == BLACK_KING)
+    {
+        castling_rights &= ~0b1100;
+    }
+    else if (piece == WHITE_ROOK)
+    {
+        if (source == h1)
+            castling_rights &= ~0b0001;
+        else if (source == a1)
+            castling_rights &= ~0b0010;
+    }
+    else if (piece == BLACK_ROOK)
+    {
+        if (source == h8)
+            castling_rights &= ~0b0100;
+        else if (source == a8)
+            castling_rights &= ~0b1000;
+    }
     // Remove piece from source
     bitboards[piece] &= ~(1ULL << source);
     board_arr[source] = EMPTY;
@@ -226,6 +253,47 @@ void Board::make_move(const Move &move)
     {
         // Remove captured piece
         bitboards[captured] &= ~(1ULL << destination);
+
+        // Update castling rights if a rook is captured
+        if (captured == WHITE_ROOK)
+        {
+            if (destination == h1) castling_rights &= ~0b0001;
+            else if (destination == a1) castling_rights &= ~0b0010;
+        }
+        else if (captured == BLACK_ROOK)
+        {
+            if (destination == h8) castling_rights &= ~0b0100;
+            else if (destination == a8) castling_rights &= ~0b1000;
+        }
+    }
+    else if (move.castle != 0)
+    {
+        // king side
+        if (move.castle == 1)
+        {
+            int rook_src = (piece == WHITE_KING) ? h1 : h8;
+            int rook_dst = (piece == WHITE_KING) ? f1 : f8;
+            int rook_piece = (piece == WHITE_KING) ? WHITE_ROOK : BLACK_ROOK;
+
+            // Move rook
+            bitboards[rook_piece] &= ~(1ULL << rook_src);
+            bitboards[rook_piece] |= (1ULL << rook_dst);
+            board_arr[rook_src] = EMPTY;
+            board_arr[rook_dst] = rook_piece;
+        }
+        // queen side
+        else if (move.castle == 2)
+        {
+            int rook_src = (piece == WHITE_KING) ? a1 : a8;
+            int rook_dst = (piece == WHITE_KING) ? d1 : d8;
+            int rook_piece = (piece == WHITE_KING) ? WHITE_ROOK : BLACK_ROOK;
+
+            // Move rook
+            bitboards[rook_piece] &= ~(1ULL << rook_src);
+            bitboards[rook_piece] |= (1ULL << rook_dst);
+            board_arr[rook_src] = EMPTY;
+            board_arr[rook_dst] = rook_piece;
+        }
     }
 
     // Place piece at destination
@@ -248,17 +316,49 @@ void Board::make_move(const Move &move)
         // Handle enpassant capture
         else if ((1ULL << destination) == old_enpassant_mask)
         {
-            int ep_capture_square = white_to_move ? (destination - 8) : (destination + 8);
-            int ep_captured_piece = white_to_move ? BLACK_PAWN : WHITE_PAWN;
-            // Remove the captured pawn
-            bitboards[ep_captured_piece] &= ~(1ULL << ep_capture_square);
-            board_arr[ep_capture_square] = EMPTY;
+            int captured_pawn_sq = (piece == WHITE_PAWN) ? destination - 8 : destination + 8;
+            bitboards[captured] &= ~(1ULL << captured_pawn_sq);
+            board_arr[captured_pawn_sq] = EMPTY;
         }
     }
 
     white_to_move = !white_to_move;
     update_bitboards();
 }
+
+bool Board::is_square_attacked(int square, bool by_white)
+{
+    // Check pawn attacks
+    if (by_white)
+    {
+        // To check if 'square' is attacked by a WHITE pawn (which attacks upwards),
+        // we check if there is a WHITE pawn on the squares that a BLACK pawn at 'square' would attack (downwards).
+        if (pawn_attacks[1][square] & bitboards[WHITE_PAWN]) return true;
+    }
+    else
+    {
+        // To check if 'square' is attacked by a BLACK pawn (which attacks downwards),
+        // we check if there is a BLACK pawn on the squares that a WHITE pawn at 'square' would attack (upwards).
+        if (pawn_attacks[0][square] & bitboards[BLACK_PAWN]) return true;
+    }
+
+    // Check knight attacks
+    if (knight_attacks[square] & bitboards[by_white ? WHITE_KNIGHT : BLACK_KNIGHT]) return true;
+
+    // Check king attacks
+    if (king_attacks[square] & bitboards[by_white ? WHITE_KING : BLACK_KING]) return true;
+
+    // Check bishop/queen attacks (diagonal)
+    Bitboard bishops_queens = bitboards[by_white ? WHITE_BISHOP : BLACK_BISHOP] | bitboards[by_white ? WHITE_QUEEN : BLACK_QUEEN];
+    if (get_bishop_attacks(square, all_pieces) & bishops_queens) return true;
+
+    // Check rook/queen attacks (straight)
+    Bitboard rooks_queens = bitboards[by_white ? WHITE_ROOK : BLACK_ROOK] | bitboards[by_white ? WHITE_QUEEN : BLACK_QUEEN];
+    if (get_rook_attacks(square, all_pieces) & rooks_queens) return true;
+
+    return false;
+}
+// tbi update only changed squares
 void Board::update_bitboards()
 {
     white_pieces = 0ULL;

@@ -125,6 +125,58 @@ void MoveGenerator::generate_king_moves(Board &board, std::vector<Move> &moves)
             moves.emplace_back(source_square, target_square, piece_type, captured_piece);
             attacks &= attacks - 1;
         }
+
+        // Castling
+        if (white_to_move)
+        {
+            // King Side (e1 -> g1)
+            if ((board.castling_rights & 1) &&
+                board.board_arr[f1] == EMPTY && board.board_arr[g1] == EMPTY)
+            {
+                if (!board.is_square_attacked(e1, false) &&
+                    !board.is_square_attacked(f1, false) &&
+                    !board.is_square_attacked(g1, false))
+                {
+                    moves.emplace_back(e1, g1, WHITE_KING, 0, 0, 0, 1);
+                }
+            }
+            // Queen Side (e1 -> c1)
+            if ((board.castling_rights & 2) &&
+                board.board_arr[d1] == EMPTY && board.board_arr[c1] == EMPTY && board.board_arr[b1] == EMPTY)
+            {
+                if (!board.is_square_attacked(e1, false) &&
+                    !board.is_square_attacked(d1, false) &&
+                    !board.is_square_attacked(c1, false))
+                {
+                    moves.emplace_back(e1, c1, WHITE_KING, 0, 0, 0, 2);
+                }
+            }
+        }
+        else
+        {
+            // King Side (e8 -> g8)
+            if ((board.castling_rights & 4) &&
+                board.board_arr[f8] == EMPTY && board.board_arr[g8] == EMPTY)
+            {
+                if (!board.is_square_attacked(e8, true) &&
+                    !board.is_square_attacked(f8, true) &&
+                    !board.is_square_attacked(g8, true))
+                {
+                    moves.emplace_back(e8, g8, BLACK_KING, 0, 0, 0, 1);
+                }
+            }
+            // Queen Side (e8 -> c8)
+            if ((board.castling_rights & 8) &&
+                board.board_arr[d8] == EMPTY && board.board_arr[c8] == EMPTY && board.board_arr[b8] == EMPTY)
+            {
+                if (!board.is_square_attacked(e8, true) &&
+                    !board.is_square_attacked(d8, true) &&
+                    !board.is_square_attacked(c8, true))
+                {
+                    moves.emplace_back(e8, c8, BLACK_KING, 0, 0, 0, 2);
+                }
+            }
+        }
     }
 }
 // tbi magic bitboards for sliding pieces
