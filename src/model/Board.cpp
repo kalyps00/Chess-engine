@@ -4,6 +4,25 @@ long long Board::knight_attacks[64];
 long long Board::pawn_attacks[2][64];
 long long Board::king_attacks[64];
 
+Board::Board()
+{
+    static bool initialized = false;
+    if (!initialized)
+    {
+        init_knight_attacks();
+        init_pawn_attacks();
+        init_king_attacks();
+        initialized = true;
+    } // Clear bitboards and Board array
+    for (int i = 0; i < 13; i++)
+        bitboards[i] = 0ULL;
+    for (int i = 0; i < 64; i++)
+        board_arr[i] = EMPTY;
+
+    load_starting_position();
+    white_to_move = true;
+}
+
 void Board::init_pawn_attacks()
 {
     for (int square = 0; square < 64; square++)
@@ -142,25 +161,6 @@ long long Board::get_queen_attacks(int square, long long occupied)
 {
     return get_rook_attacks(square, occupied) | get_bishop_attacks(square, occupied);
 }
-Board::Board()
-{
-    static bool initialized = false;
-    if (!initialized)
-    {
-        init_knight_attacks();
-        init_pawn_attacks();
-        init_king_attacks();
-        initialized = true;
-    } // Clear bitboards and Board array
-    for (int i = 0; i < 13; i++)
-        bitboards[i] = 0ULL;
-    for (int i = 0; i < 64; i++)
-        board_arr[i] = EMPTY;
-
-    load_starting_position();
-    white_to_move = true;
-}
-
 int Board::get_piece_at(int pos)
 {
     if (pos < 0 || pos >= 64)
@@ -214,26 +214,47 @@ void Board::make_move(const Move &move)
     int source = move.source;
     int destination = move.target;
     int piece = board_arr[source];
-    int captured = board_arr[destination];
+    int captured = move.captured;
 
     if (piece == EMPTY)
         return;
-
-    long long move_mask = (1ULL << source) | (1ULL << destination);
-    bitboards[piece] ^= move_mask;
-
-    if (captured != EMPTY)
-    {
-        bitboards[captured] ^= (1ULL << destination);
-    }
+    // Remove piece from source
+    bitboards[piece] &= ~(1ULL << source);
     board_arr[source] = EMPTY;
-    board_arr[destination] = piece;
 
-    int pieceToPlace = (move.promotion != 0) ? move.promotion : piece;
+    if (captured != EMPTY && move.promotion == 0 && move.enpassant == 0)
+    {
+        // Remove captured piece
+        bitboards[captured] &= ~(1ULL << destination);
+    }
 
     // Place piece at destination
+    int pieceToPlace = (move.promotion != 0) ? move.promotion : piece;
     bitboards[pieceToPlace] |= (1ULL << destination);
     board_arr[destination] = pieceToPlace;
+
+    // ennpassant
+    long long old_enpassant_mask = enpassant_square;
+    enpassant_square = 0ULL;
+
+    if (piece == WHITE_PAWN || piece == BLACK_PAWN)
+    {
+        // Set enpassant square if double pawn move
+        if (abs(destination - source) == 16)
+        {
+            int ep_square = (source + destination) / 2;
+            enpassant_square = (1ULL << ep_square);
+        }
+        // Handle enpassant capture
+        else if ((1ULL << destination) == (unsigned long long)old_enpassant_mask)
+        {
+            int ep_capture_square = white_to_move ? (destination - 8) : (destination + 8);
+            int ep_captured_piece = white_to_move ? BLACK_PAWN : WHITE_PAWN;
+            // Remove the captured pawn
+            bitboards[ep_captured_piece] &= ~(1ULL << ep_capture_square);
+            board_arr[ep_capture_square] = EMPTY;
+        }
+    }
 
     white_to_move = !white_to_move;
     update_bitboards();

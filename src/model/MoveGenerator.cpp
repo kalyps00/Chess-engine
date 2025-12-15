@@ -44,7 +44,6 @@ void MoveGenerator::generate_pawn_moves(Board &board, std::vector<Move> &moves)
                 int double_move_square = source_square + 2 * direction;
                 if ((1ULL << double_move_square) & board.empty_squares)
                 {
-
                     moves.emplace_back(source_square, double_move_square, pawn_type);
                 }
             }
@@ -70,6 +69,16 @@ void MoveGenerator::generate_pawn_moves(Board &board, std::vector<Move> &moves)
                 moves.emplace_back(source_square, attack_square, pawn_type, captured_piece);
             }
             capture_targets &= capture_targets - 1;
+        }
+        if (board.enpassant_square)
+        {
+            long long ep_attacks = pawn_attacks_mask & board.enpassant_square;
+            if (ep_attacks)
+            {
+                int ep_square = __builtin_ctzll(ep_attacks);
+                int captured_pawn = white_to_move ? BLACK_PAWN : WHITE_PAWN;
+                moves.emplace_back(source_square, ep_square, pawn_type, captured_pawn, 0, 1);
+            }
         }
         // delete processed pawn
         pawns_mask &= pawns_mask - 1;

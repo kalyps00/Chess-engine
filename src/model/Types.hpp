@@ -47,13 +47,13 @@ struct Move
     int piece;
     int captured;
     int promotion; // 0 if no promotion
+    int enpassant; // 0 if not an enpassant move
 
-    
-    Move() : source(0), target(0), piece(0), captured(0), promotion(0) {}
+    Move() : source(0), target(0), piece(0), captured(0), promotion(0), enpassant(0) {}
 
     // Constructor for standard moves
-    Move(int src, int tgt, int p, int cap = 0, int prom = 0)
-        : source(src), target(tgt), piece(p), captured(cap), promotion(prom) {}
+    Move(int src, int tgt, int p, int cap = 0, int prom = 0, int ep = 0)
+        : source(src), target(tgt), piece(p), captured(cap), promotion(prom), enpassant(ep) {}
 };
 
 #endif

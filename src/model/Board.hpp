@@ -29,7 +29,8 @@ private:
         white_pieces, // 1-5
         black_pieces, // 6-12
         all_pieces,
-        empty_squares;
+        empty_squares,
+        enpassant_square;
     void update_bitboards();
     // Game state
     bool white_to_move;

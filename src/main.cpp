@@ -6,4 +6,5 @@ int main()
     GameControler game;
     game.run();
     return 0;
+    // perft test
 }
