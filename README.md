@@ -93,3 +93,11 @@ Chess-engine/
 - [ ] Loading position from fen
 - [ ] UCI
 - [ ] Simple AI (Minimax)
+
+## Optimalizations to do:
+
+- [ ] Magic Bitboards
+- [ ] Zobrist hashing
+- [ ] Incremental Updates
+- [ ] Move ordering
+- [ ] Piece lists (if needed)

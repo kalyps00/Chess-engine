@@ -12,6 +12,7 @@ Board::Board()
         init_knight_attacks();
         init_pawn_attacks();
         init_king_attacks();
+        init_between();
 
         initialized = true;
     } // Clear bitboards and Board array
@@ -101,6 +102,37 @@ void Board::init_king_attacks()
             }
         }
         king_attacks[square] = attacks;
+    }
+}
+void Board::init_between()
+{
+    for (int sq1 = 0; sq1 < 64; sq1++)
+    {
+        for (int sq2 = 0; sq2 < 64; sq2++)
+        {
+            between[sq1][sq2] = 0ULL;
+            if (sq1 == sq2)
+            {
+                continue;
+            }
+            int file1 = sq1 % 8, file2 = sq2 % 8;
+            int rank1 = sq1 / 8, rank2 = sq2 / 8;
+            int dx = file1 - file2, dy = rank2 - rank1;
+            // same file, rank, \ and /
+            if (dx != 0 && dy != 0 && abs(dx) != abs(dy))
+            {
+                continue;
+            }
+            int step_x = (dx == 0) ? 0 : (dx > 0 ? 1 : -1);
+            int step_y = (dy == 0) ? 0 : (dy > 0 ? 1 : -1);
+            int step = step_y * 8 + step_x;
+            int current = sq1 + step;
+            while (current != sq2)
+            {
+                between[sq1][sq2] |= (1ULL << current);
+                current += step;
+            }
+        }
     }
 }
 Bitboard Board::get_rook_attacks(int square, Bitboard occupied)
@@ -462,6 +494,11 @@ bool Board::is_square_attacked(int square, bool by_white)
         return true;
 
     return false;
+}
+bool Board::is_in_check(bool white_to_move)
+{
+    int king_square = __builtin_ctzll(bitboards[white_to_move ? WHITE_KING : BLACK_KING]);
+    return is_square_attacked(king_square, !white_to_move);
 }
 // tbi update only changed squares
 void Board::update_bitboards()
