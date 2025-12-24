@@ -22,8 +22,8 @@ enum PieceIndex
     BLACK_QUEEN = 11,
     BLACK_KING = 12
 };
-
-inline bool is_white_piece(int piece)
+inline bool
+is_white_piece(int piece)
 {
     return piece >= WHITE_PAWN && piece <= WHITE_KING;
 }

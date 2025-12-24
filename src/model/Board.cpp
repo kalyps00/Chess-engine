@@ -213,6 +213,92 @@ void Board::load_starting_position()
     // Initial castling rights
     castling_rights = 0b1111; // All castling rights available at start
 }
+// function is pretty slow but we use it only once  - will improvein the future focused on readability
+void Board::load_fen_position(std::string fen)
+{
+    // board
+    int rank = 7, file = 0, idx = 0;
+    while (fen[idx] != ' ')
+    {
+        int square_idx = rank * 8 + file;
+        char c = fen[idx++];
+        switch (c)
+        {
+        case '/':
+            rank--;
+            break;
+        case 'p':
+        case 'P':
+            set_bit(square_idx, c == 'P' ? WHITE_PAWN : BLACK_PAWN);
+            break;
+        case 'n':
+        case 'N':
+            set_bit(square_idx, c == 'N' ? WHITE_KNIGHT : BLACK_KNIGHT);
+            break;
+        case 'b':
+        case 'B':
+            set_bit(square_idx, c == 'B' ? WHITE_BISHOP : BLACK_BISHOP);
+            break;
+        case 'r':
+        case 'R':
+            set_bit(square_idx, c == 'R' ? WHITE_ROOK : BLACK_ROOK);
+            break;
+        case 'q':
+        case 'Q':
+            set_bit(square_idx, c == 'Q' ? WHITE_QUEEN : BLACK_QUEEN);
+            break;
+        case 'k':
+        case 'K':
+            set_bit(square_idx, c == 'K' ? WHITE_KING : BLACK_KING);
+            break;
+        default:
+            file += (int)c;
+        }
+        file++;
+        file %= 8;
+    }
+    idx++;
+    // game state
+    // turn
+    white_to_move = fen[idx++] == 'w' ? true : false;
+    // castling
+    if (fen[idx] = '-')
+    {
+        castling_rights = 0;
+    }
+    else
+    {
+        while (fen[idx] != ' ')
+        {
+            char c = fen[idx];
+            switch (c)
+            {
+            case 'Q':
+                castling_rights |= 0b1000;
+                break;
+            case 'K':
+                castling_rights |= 0b0100;
+                break;
+            case 'q':
+                castling_rights |= 0b0010;
+                break;
+            case 'k':
+                castling_rights |= 0b0001;
+                break;
+            }
+        }
+    }
+    idx++;
+    // enpasant square
+    if (fen[idx++] != '-')
+    {
+        enpassant_square = (1ULL << (Square)fen[idx]);
+    }
+    // halfmove clock
+    halfmove_clock = fen[idx++];
+    // fullmove clock
+    fullmove_clock = fen[idx];
+}
 void Board::make_move(const Move &move)
 {
     int source = move.source;
@@ -231,25 +317,26 @@ void Board::make_move(const Move &move)
     {
         castling_rights &= ~0b1100;
     }
+    // might be bugged changed rook masks
     else if (piece == WHITE_ROOK)
     {
         if (source == h1)
-            castling_rights &= ~0b0001;
+            castling_rights &= ~0b0100;
         else if (source == a1)
-            castling_rights &= ~0b0010;
+            castling_rights &= ~0b1000;
     }
     else if (piece == BLACK_ROOK)
     {
         if (source == h8)
-            castling_rights &= ~0b0100;
+            castling_rights &= ~0b0001;
         else if (source == a8)
-            castling_rights &= ~0b1000;
+            castling_rights &= ~0b0010;
     }
     // Remove piece from source
     bitboards[piece] &= ~(1ULL << source);
     board_arr[source] = EMPTY;
 
-    if (captured != EMPTY && move.promotion == 0 && move.enpassant == 0)
+    if (captured != EMPTY && move.enpassant == 0)
     {
         // Remove captured piece
         bitboards[captured] &= ~(1ULL << destination);
@@ -257,13 +344,17 @@ void Board::make_move(const Move &move)
         // Update castling rights if a rook is captured
         if (captured == WHITE_ROOK)
         {
-            if (destination == h1) castling_rights &= ~0b0001;
-            else if (destination == a1) castling_rights &= ~0b0010;
+            if (destination == h1)
+                castling_rights &= ~0b0001;
+            else if (destination == a1)
+                castling_rights &= ~0b0010;
         }
         else if (captured == BLACK_ROOK)
         {
-            if (destination == h8) castling_rights &= ~0b0100;
-            else if (destination == a8) castling_rights &= ~0b1000;
+            if (destination == h8)
+                castling_rights &= ~0b0100;
+            else if (destination == a8)
+                castling_rights &= ~0b1000;
         }
     }
     else if (move.castle != 0)
@@ -300,6 +391,12 @@ void Board::make_move(const Move &move)
     int pieceToPlace = (move.promotion != 0) ? move.promotion : piece;
     bitboards[pieceToPlace] |= (1ULL << destination);
     board_arr[destination] = pieceToPlace;
+    // update  clock moves
+    halfmove_clock = move.captured != 0 ? 0 : halfmove_clock++;
+    if (white_to_move = false)
+    {
+        fullmove_clock++;
+    }
 
     // ennpassant
     Bitboard old_enpassant_mask = enpassant_square;
@@ -314,12 +411,14 @@ void Board::make_move(const Move &move)
             enpassant_square = (1ULL << ep_square);
         }
         // Handle enpassant capture
-        else if ((1ULL << destination) == old_enpassant_mask)
+        else if (old_enpassant_mask && (1ULL << destination) == old_enpassant_mask)
         {
             int captured_pawn_sq = (piece == WHITE_PAWN) ? destination - 8 : destination + 8;
             bitboards[captured] &= ~(1ULL << captured_pawn_sq);
             board_arr[captured_pawn_sq] = EMPTY;
         }
+        // update here for perforamnce
+        halfmove_clock = 0;
     }
 
     white_to_move = !white_to_move;
@@ -333,28 +432,34 @@ bool Board::is_square_attacked(int square, bool by_white)
     {
         // To check if 'square' is attacked by a WHITE pawn (which attacks upwards),
         // we check if there is a WHITE pawn on the squares that a BLACK pawn at 'square' would attack (downwards).
-        if (pawn_attacks[1][square] & bitboards[WHITE_PAWN]) return true;
+        if (pawn_attacks[1][square] & bitboards[WHITE_PAWN])
+            return true;
     }
     else
     {
         // To check if 'square' is attacked by a BLACK pawn (which attacks downwards),
         // we check if there is a BLACK pawn on the squares that a WHITE pawn at 'square' would attack (upwards).
-        if (pawn_attacks[0][square] & bitboards[BLACK_PAWN]) return true;
+        if (pawn_attacks[0][square] & bitboards[BLACK_PAWN])
+            return true;
     }
 
     // Check knight attacks
-    if (knight_attacks[square] & bitboards[by_white ? WHITE_KNIGHT : BLACK_KNIGHT]) return true;
+    if (knight_attacks[square] & bitboards[by_white ? WHITE_KNIGHT : BLACK_KNIGHT])
+        return true;
 
     // Check king attacks
-    if (king_attacks[square] & bitboards[by_white ? WHITE_KING : BLACK_KING]) return true;
+    if (king_attacks[square] & bitboards[by_white ? WHITE_KING : BLACK_KING])
+        return true;
 
     // Check bishop/queen attacks (diagonal)
     Bitboard bishops_queens = bitboards[by_white ? WHITE_BISHOP : BLACK_BISHOP] | bitboards[by_white ? WHITE_QUEEN : BLACK_QUEEN];
-    if (get_bishop_attacks(square, all_pieces) & bishops_queens) return true;
+    if (get_bishop_attacks(square, all_pieces) & bishops_queens)
+        return true;
 
     // Check rook/queen attacks (straight)
     Bitboard rooks_queens = bitboards[by_white ? WHITE_ROOK : BLACK_ROOK] | bitboards[by_white ? WHITE_QUEEN : BLACK_QUEEN];
-    if (get_rook_attacks(square, all_pieces) & rooks_queens) return true;
+    if (get_rook_attacks(square, all_pieces) & rooks_queens)
+        return true;
 
     return false;
 }

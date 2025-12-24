@@ -33,16 +33,18 @@ private:
         enpassant_square;
     void update_bitboards();
     int castling_rights; // bit 0: white king-side, bit 1: white queen-side, bit 2: black king-side, bit 3: black queen-side
-    void remove_castling_rights(int piece, int source);
     bool is_square_attacked(int square, bool by_white);
     // Game state
     bool white_to_move;
+    int halfmove_clock = 0;
+    int fullmove_clock = 1;
 
 public:
     Board();
     int get_piece_at(int pos);
     void load_starting_position();
-    // void load_fen_position(std::string fen);
+    void load_fen_position(std::string fen);
+    std::string export_fen_position(); // tbi
     void make_move(const Move &move);
     void set_bit(int square, int piece);
     bool is_white_to_move() const { return white_to_move; }
