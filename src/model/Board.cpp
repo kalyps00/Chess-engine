@@ -3,6 +3,7 @@
 Bitboard Board::knight_attacks[64];
 Bitboard Board::pawn_attacks[2][64];
 Bitboard Board::king_attacks[64];
+Bitboard Board::between[64][64];
 
 Board::Board()
 {
@@ -518,4 +519,102 @@ void Board::update_bitboards()
     }
     all_pieces = white_pieces | black_pieces;
     empty_squares = ~all_pieces;
+}
+Bitboard Board::get_attackers(int square, bool white_attacker)
+{
+    Bitboard attackers = 0ULL;
+    // Pawns using black lookup table
+    attackers |= (pawn_attacks[white_attacker ? 1 : 0][square] & bitboards[white_attacker ? WHITE_PAWN : BLACK_PAWN]);
+
+    // Knights
+    attackers |= (knight_attacks[square] & bitboards[white_attacker ? WHITE_KNIGHT : BLACK_KNIGHT]);
+
+    // King
+    attackers |= (king_attacks[square] & bitboards[white_attacker ? WHITE_KING : BLACK_KING]);
+
+    // Sliding pieces (Bishops/Queens)
+    Bitboard bishops_queens = bitboards[white_attacker ? WHITE_BISHOP : BLACK_BISHOP] |
+                              bitboards[white_attacker ? WHITE_QUEEN : BLACK_QUEEN];
+    if (bishops_queens)
+    {
+        attackers |= (get_bishop_attacks(square, all_pieces) & bishops_queens);
+    }
+
+    // Sliding pieces (Rooks/Queens)
+    Bitboard rooks_queens = bitboards[white_attacker ? WHITE_ROOK : BLACK_ROOK] |
+                            bitboards[white_attacker ? WHITE_QUEEN : BLACK_QUEEN];
+    if (rooks_queens)
+    {
+        attackers |= (get_rook_attacks(square, all_pieces) & rooks_queens);
+    }
+
+    return attackers;
+}
+
+Bitboard Board::get_check_mask(bool white_to_move)
+{
+    int king_sq = __builtin_ctzll(bitboards[white_to_move ? WHITE_KING : BLACK_KING]);
+
+    Bitboard attackers = get_attackers(king_sq, !white_to_move);
+
+    int count = __builtin_popcountll(attackers);
+
+    // No check -> can move anywhere
+    if (count == 0)
+        return ~0ULL;
+
+    // Double check -> only king can move
+    if (count > 1)
+        return 0ULL;
+
+    // Single check -> must capture attacker OR block the line
+    int attacker_sq = __builtin_ctzll(attackers);
+
+    // Mask is: squares between king and attacker OR the attacker square itself
+    return between[king_sq][attacker_sq] | (1ULL << attacker_sq);
+}
+
+void Board::get_pin_masks(bool white_to_move, Bitboard *pin_masks)
+{
+    // Default
+    for (int i = 0; i < 64; i++)
+        pin_masks[i] = ~0ULL;
+
+    int king_sq = __builtin_ctzll(bitboards[white_to_move ? WHITE_KING : BLACK_KING]);
+    Bitboard my_pieces = white_to_move ? white_pieces : black_pieces;
+    Bitboard op_rooks = bitboards[white_to_move ? BLACK_ROOK : WHITE_ROOK] | bitboards[white_to_move ? BLACK_QUEEN : WHITE_QUEEN];
+    Bitboard op_bishops = bitboards[white_to_move ? BLACK_BISHOP : WHITE_BISHOP] | bitboards[white_to_move ? BLACK_QUEEN : WHITE_QUEEN];
+
+    Bitboard pinner_candidates = get_rook_attacks(king_sq, 0) & op_rooks;
+
+    while (pinner_candidates)
+    {
+        int pinner_sq = __builtin_ctzll(pinner_candidates);
+        Bitboard path = between[king_sq][pinner_sq];
+        Bitboard pinned = path & my_pieces;
+
+        if (__builtin_popcountll(pinned) == 1)
+        {
+            int pinned_sq = __builtin_ctzll(pinned);
+            // Movement mask for this piece is the attack line (including pinner)
+            pin_masks[pinned_sq] = path | (1ULL << pinner_sq);
+        }
+        pinner_candidates &= pinner_candidates - 1;
+    }
+
+    pinner_candidates = get_bishop_attacks(king_sq, 0) & op_bishops;
+
+    while (pinner_candidates)
+    {
+        int pinner_sq = __builtin_ctzll(pinner_candidates);
+        Bitboard path = between[king_sq][pinner_sq];
+        Bitboard pinned = path & my_pieces;
+
+        if (__builtin_popcountll(pinned) == 1)
+        {
+            int pinned_sq = __builtin_ctzll(pinned);
+            pin_masks[pinned_sq] = path | (1ULL << pinner_sq);
+        }
+        pinner_candidates &= pinner_candidates - 1;
+    }
 }
