@@ -118,7 +118,7 @@ void Board::init_between()
             }
             int file1 = sq1 % 8, file2 = sq2 % 8;
             int rank1 = sq1 / 8, rank2 = sq2 / 8;
-            int dx = file1 - file2, dy = rank2 - rank1;
+            int dx = file2 - file1, dy = rank2 - rank1;
             // same file, rank, \ and /
             if (dx != 0 && dy != 0 && abs(dx) != abs(dy))
             {
@@ -128,7 +128,7 @@ void Board::init_between()
             int step_y = (dy == 0) ? 0 : (dy > 0 ? 1 : -1);
             int step = step_y * 8 + step_x;
             int current = sq1 + step;
-            while (current != sq2)
+            while (current != sq2 && current >= 0 && current < 64)
             {
                 between[sq1][sq2] |= (1ULL << current);
                 current += step;
@@ -285,7 +285,7 @@ void Board::load_fen_position(std::string fen)
             set_bit(square_idx, c == 'K' ? WHITE_KING : BLACK_KING);
             break;
         default:
-            file += (int)c;
+            file += (c - '0') - 1;
         }
         file++;
         file %= 8;
@@ -295,7 +295,7 @@ void Board::load_fen_position(std::string fen)
     // turn
     white_to_move = fen[idx++] == 'w' ? true : false;
     // castling
-    if (fen[idx] = '-')
+    if (fen[idx] == '-')
     {
         castling_rights = 0;
     }
@@ -303,20 +303,20 @@ void Board::load_fen_position(std::string fen)
     {
         while (fen[idx] != ' ')
         {
-            char c = fen[idx];
+            char c = fen[idx++];
             switch (c)
             {
             case 'Q':
-                castling_rights |= 0b1000;
-                break;
-            case 'K':
-                castling_rights |= 0b0100;
-                break;
-            case 'q':
                 castling_rights |= 0b0010;
                 break;
-            case 'k':
+            case 'K':
                 castling_rights |= 0b0001;
+                break;
+            case 'q':
+                castling_rights |= 0b1000;
+                break;
+            case 'k':
+                castling_rights |= 0b0100;
                 break;
             }
         }
@@ -354,16 +354,16 @@ void Board::make_move(const Move &move)
     else if (piece == WHITE_ROOK)
     {
         if (source == h1)
-            castling_rights &= ~0b0100;
+            castling_rights &= ~0b0001;
         else if (source == a1)
-            castling_rights &= ~0b1000;
+            castling_rights &= ~0b0010;
     }
     else if (piece == BLACK_ROOK)
     {
         if (source == h8)
-            castling_rights &= ~0b0001;
+            castling_rights &= ~0b0100;
         else if (source == a8)
-            castling_rights &= ~0b0010;
+            castling_rights &= ~0b1000;
     }
     // Remove piece from source
     bitboards[piece] &= ~(1ULL << source);
@@ -425,8 +425,8 @@ void Board::make_move(const Move &move)
     bitboards[pieceToPlace] |= (1ULL << destination);
     board_arr[destination] = pieceToPlace;
     // update  clock moves
-    halfmove_clock = move.captured != 0 ? 0 : halfmove_clock++;
-    if (white_to_move = false)
+    halfmove_clock = move.captured != 0 ? 0 : halfmove_clock + 1;
+    if (white_to_move == false)
     {
         fullmove_clock++;
     }

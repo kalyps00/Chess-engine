@@ -4,69 +4,81 @@ std::vector<Move> MoveGenerator::generate_moves(Board &board)
 {
     std::vector<Move> moves;
     moves.reserve(256);
-
-    generate_pawn_moves(board, moves);
-    generate_knight_moves(board, moves);
+    Bitboard pin_mask[64];
+    board.get_pin_masks(board.white_to_move, pin_mask);
+    Bitboard check_mask = board.get_check_mask(board.white_to_move);
     generate_king_moves(board, moves);
-    generate_sliding_moves(board, moves);
+    generate_pawn_moves(board, moves, check_mask, pin_mask);
+    generate_knight_moves(board, moves, check_mask, pin_mask);
+    generate_sliding_moves(board, moves, check_mask, pin_mask);
 
     return moves;
 }
-void MoveGenerator::generate_pawn_moves(Board &board, std::vector<Move> &moves)
+void MoveGenerator::generate_pawn_moves(Board &board, std::vector<Move> &moves, Bitboard check_mask, Bitboard *pin_masks)
 {
-    bool white_to_move = board.is_white_to_move();
+    bool white_to_move = board.white_to_move;
     int pawn_type = white_to_move ? WHITE_PAWN : BLACK_PAWN;
     Bitboard pawns_mask = board.bitboards[pawn_type];
     Bitboard enemy_pieces_mask = white_to_move ? board.black_pieces : board.white_pieces;
     int direction = white_to_move ? 8 : -8;
     Bitboard start_mask = white_to_move ? (0xFFULL << 8) : (0xFFULL << 48);
     Bitboard promotion_rank_mask = white_to_move ? (0xFFULL << 56) : (0xFFULL << 0);
-
     while (pawns_mask)
     {
+
         int source_square = __builtin_ctzll(pawns_mask);
         int target_square = source_square + direction;
+        Bitboard allowed = check_mask & pin_masks[source_square];
+
         if ((1ULL << target_square) & board.empty_squares)
         {
-            // Promotions
-            if ((1ULL << target_square) & promotion_rank_mask)
+            // if in check or pinned
+            if ((1ULL << target_square) & allowed)
             {
-                moves.emplace_back(source_square, target_square, pawn_type, 0, white_to_move ? WHITE_QUEEN : BLACK_QUEEN);
-                moves.emplace_back(source_square, target_square, pawn_type, 0, white_to_move ? WHITE_ROOK : BLACK_ROOK);
-                moves.emplace_back(source_square, target_square, pawn_type, 0, white_to_move ? WHITE_BISHOP : BLACK_BISHOP);
-                moves.emplace_back(source_square, target_square, pawn_type, 0, white_to_move ? WHITE_KNIGHT : BLACK_KNIGHT);
-            }
-            else
-                moves.emplace_back(source_square, target_square, pawn_type);
-            // Double move from starting position
-            if ((1ULL << source_square) & start_mask)
-            {
-                int double_move_square = source_square + 2 * direction;
-                if ((1ULL << double_move_square) & board.empty_squares)
+                // Promotions
+                if ((1ULL << target_square) & promotion_rank_mask)
                 {
-                    moves.emplace_back(source_square, double_move_square, pawn_type);
+                    moves.emplace_back(source_square, target_square, pawn_type, 0, white_to_move ? WHITE_QUEEN : BLACK_QUEEN);
+                    moves.emplace_back(source_square, target_square, pawn_type, 0, white_to_move ? WHITE_ROOK : BLACK_ROOK);
+                    moves.emplace_back(source_square, target_square, pawn_type, 0, white_to_move ? WHITE_BISHOP : BLACK_BISHOP);
+                    moves.emplace_back(source_square, target_square, pawn_type, 0, white_to_move ? WHITE_KNIGHT : BLACK_KNIGHT);
+                }
+                else
+                    moves.emplace_back(source_square, target_square, pawn_type);
+                // Double move from starting position
+                if ((1ULL << source_square) & start_mask)
+                {
+                    int double_move_square = source_square + 2 * direction;
+                    if (((1ULL << double_move_square) & board.empty_squares) && ((1ULL << double_move_square) & allowed))
+                    {
+                        moves.emplace_back(source_square, double_move_square, pawn_type);
+                    }
                 }
             }
         }
         // Captures
         Bitboard pawn_attacks_mask = Board::pawn_attacks[white_to_move ? 0 : 1][source_square];
         Bitboard capture_targets = pawn_attacks_mask & enemy_pieces_mask;
+
         while (capture_targets)
         {
             int attack_square = __builtin_ctzll(capture_targets);
             int captured_piece = board.board_arr[attack_square];
-
-            // Promotions on capture
-            if ((1ULL << attack_square) & promotion_rank_mask)
+            // if in check or pinned
+            if ((1ULL << attack_square) & allowed)
             {
-                moves.emplace_back(source_square, attack_square, pawn_type, captured_piece, white_to_move ? WHITE_QUEEN : BLACK_QUEEN);
-                moves.emplace_back(source_square, attack_square, pawn_type, captured_piece, white_to_move ? WHITE_ROOK : BLACK_ROOK);
-                moves.emplace_back(source_square, attack_square, pawn_type, captured_piece, white_to_move ? WHITE_BISHOP : BLACK_BISHOP);
-                moves.emplace_back(source_square, attack_square, pawn_type, captured_piece, white_to_move ? WHITE_KNIGHT : BLACK_KNIGHT);
-            }
-            else
-            {
-                moves.emplace_back(source_square, attack_square, pawn_type, captured_piece);
+                // Promotions on capture
+                if ((1ULL << attack_square) & promotion_rank_mask)
+                {
+                    moves.emplace_back(source_square, attack_square, pawn_type, captured_piece, white_to_move ? WHITE_QUEEN : BLACK_QUEEN);
+                    moves.emplace_back(source_square, attack_square, pawn_type, captured_piece, white_to_move ? WHITE_ROOK : BLACK_ROOK);
+                    moves.emplace_back(source_square, attack_square, pawn_type, captured_piece, white_to_move ? WHITE_BISHOP : BLACK_BISHOP);
+                    moves.emplace_back(source_square, attack_square, pawn_type, captured_piece, white_to_move ? WHITE_KNIGHT : BLACK_KNIGHT);
+                }
+                else
+                {
+                    moves.emplace_back(source_square, attack_square, pawn_type, captured_piece);
+                }
             }
             capture_targets &= capture_targets - 1;
         }
@@ -84,7 +96,7 @@ void MoveGenerator::generate_pawn_moves(Board &board, std::vector<Move> &moves)
         pawns_mask &= pawns_mask - 1;
     }
 }
-void MoveGenerator::generate_knight_moves(Board &board, std::vector<Move> &moves)
+void MoveGenerator::generate_knight_moves(Board &board, std::vector<Move> &moves, Bitboard check_mask, Bitboard *pin_masks)
 {
     bool white_to_move = board.white_to_move;
     int piece_type = white_to_move ? WHITE_KNIGHT : BLACK_KNIGHT;
@@ -95,6 +107,7 @@ void MoveGenerator::generate_knight_moves(Board &board, std::vector<Move> &moves
     {
         int source_square = __builtin_ctzll(knights_mask);
         Bitboard attacks = Board::knight_attacks[source_square] & ~own_pieces_mask;
+        attacks &= (check_mask & pin_masks[source_square]);
 
         while (attacks)
         {
@@ -122,8 +135,11 @@ void MoveGenerator::generate_king_moves(Board &board, std::vector<Move> &moves)
     while (attacks)
     {
         int target_square = __builtin_ctzll(attacks);
-        int captured_piece = board.board_arr[target_square];
-        moves.emplace_back(source_square, target_square, piece_type, captured_piece);
+        if (!board.is_square_attacked(target_square, !white_to_move))
+        {
+            int captured_piece = board.board_arr[target_square];
+            moves.emplace_back(source_square, target_square, piece_type, captured_piece);
+        }
         attacks &= attacks - 1;
     }
 
@@ -131,7 +147,7 @@ void MoveGenerator::generate_king_moves(Board &board, std::vector<Move> &moves)
     if (white_to_move)
     {
         // King Side (e1 -> g1)
-        if ((board.castling_rights & 1) &&
+        if ((board.castling_rights & 0b0001) &&
             board.board_arr[f1] == EMPTY && board.board_arr[g1] == EMPTY)
         {
             if (!board.is_square_attacked(e1, false) &&
@@ -142,7 +158,7 @@ void MoveGenerator::generate_king_moves(Board &board, std::vector<Move> &moves)
             }
         }
         // Queen Side (e1 -> c1)
-        if ((board.castling_rights & 2) &&
+        if ((board.castling_rights & 0b0010) &&
             board.board_arr[d1] == EMPTY && board.board_arr[c1] == EMPTY && board.board_arr[b1] == EMPTY)
         {
             if (!board.is_square_attacked(e1, false) &&
@@ -156,7 +172,7 @@ void MoveGenerator::generate_king_moves(Board &board, std::vector<Move> &moves)
     else
     {
         // King Side (e8 -> g8)
-        if ((board.castling_rights & 4) &&
+        if ((board.castling_rights & 0b0100) &&
             board.board_arr[f8] == EMPTY && board.board_arr[g8] == EMPTY)
         {
             if (!board.is_square_attacked(e8, true) &&
@@ -167,7 +183,7 @@ void MoveGenerator::generate_king_moves(Board &board, std::vector<Move> &moves)
             }
         }
         // Queen Side (e8 -> c8)
-        if ((board.castling_rights & 8) &&
+        if ((board.castling_rights & 0b1000) &&
             board.board_arr[d8] == EMPTY && board.board_arr[c8] == EMPTY && board.board_arr[b8] == EMPTY)
         {
             if (!board.is_square_attacked(e8, true) &&
@@ -180,7 +196,7 @@ void MoveGenerator::generate_king_moves(Board &board, std::vector<Move> &moves)
     }
 }
 // tbi magic bitboards for sliding pieces
-void MoveGenerator::generate_sliding_moves(Board &board, std::vector<Move> &moves)
+void MoveGenerator::generate_sliding_moves(Board &board, std::vector<Move> &moves, Bitboard check_mask, Bitboard *pin_masks)
 {
     bool white_to_move = board.white_to_move;
     Bitboard own_pieces_mask = white_to_move ? board.white_pieces : board.black_pieces;
@@ -207,6 +223,7 @@ void MoveGenerator::generate_sliding_moves(Board &board, std::vector<Move> &move
                           board.get_rook_attacks(source_square, board.all_pieces);
 
             attacks &= ~own_pieces_mask;
+            attacks &= (check_mask & pin_masks[source_square]);
 
             while (attacks)
             {
