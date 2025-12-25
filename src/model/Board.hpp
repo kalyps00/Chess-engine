@@ -49,11 +49,10 @@ private:
 public:
     Board();
     int get_piece_at(int pos);
-    void load_starting_position();
     void load_fen_position(std::string fen);
     std::string export_fen_position(); // tbi
     void make_move(const Move &move);
-    void undo_move(const Move &move); // tbi
+    void undo_move(const Move &move);
     void set_bit(int square, int piece);
     bool is_white_to_move() const { return white_to_move; }
     Bitboard get_check_mask(bool white_to_move);

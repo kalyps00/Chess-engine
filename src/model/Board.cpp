@@ -23,10 +23,7 @@ Board::Board()
     for (int i = 0; i < 64; i++)
         board_arr[i] = EMPTY;
 
-    load_starting_position();
-    update_bitboards();
-    white_to_move = true;
-    update_game_state();
+    load_fen_position("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 }
 
 void Board::init_pawn_attacks()
@@ -215,42 +212,6 @@ void Board::set_bit(int square, int piece)
     board_arr[square] = piece;
 }
 
-void Board::load_starting_position()
-{
-    history.clear();
-    // White Pieces
-    set_bit(a1, WHITE_ROOK);
-    set_bit(h1, WHITE_ROOK);
-    set_bit(b1, WHITE_KNIGHT);
-    set_bit(g1, WHITE_KNIGHT);
-    set_bit(c1, WHITE_BISHOP);
-    set_bit(f1, WHITE_BISHOP);
-    set_bit(d1, WHITE_QUEEN);
-    set_bit(e1, WHITE_KING);
-
-    // White Pawns
-    for (int i = 8; i < 16; i++)
-        set_bit(i, WHITE_PAWN);
-
-    // Black Pieces
-    set_bit(a8, BLACK_ROOK);
-    set_bit(h8, BLACK_ROOK);
-    set_bit(b8, BLACK_KNIGHT);
-    set_bit(g8, BLACK_KNIGHT);
-    set_bit(c8, BLACK_BISHOP);
-    set_bit(f8, BLACK_BISHOP);
-    set_bit(d8, BLACK_QUEEN);
-    set_bit(e8, BLACK_KING);
-
-    // Black Pawns
-    for (int i = 48; i < 56; i++)
-        set_bit(i, BLACK_PAWN);
-
-    // Initial castling rights
-    castling_rights = 0b1111; // All castling rights available at start
-    update_bitboards();
-    update_game_state();
-}
 // function is pretty slow but we use it only once  - will improvein the future focused on readability
 void Board::load_fen_position(std::string fen)
 {

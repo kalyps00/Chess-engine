@@ -89,10 +89,10 @@ Chess-engine/
 - [x] Check and Checkmate Detection
 - [x] Choosing promotion piece
 - [x] "Game Over" Logic
-- [ ] Choosing playing side
 - [ ] Loading position from fen
 - [ ] UCI
 - [ ] Simple AI (Minimax)
+- [ ] Choosing playing side
 
 ## Optimalizations to do:
 
