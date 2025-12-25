@@ -1,6 +1,7 @@
 #ifndef BOARD_HPP
 #define BOARD_HPP
 #include <string>
+#include <vector>
 #include "Types.hpp"
 
 class MoveGenerator;
@@ -40,6 +41,7 @@ private:
     bool white_to_move;
     int halfmove_clock = 0;
     int fullmove_clock = 1;
+    std::vector<GameState> history;
 
 public:
     Board();
@@ -52,7 +54,7 @@ public:
     void set_bit(int square, int piece);
     bool is_white_to_move() const { return white_to_move; }
     Bitboard get_check_mask(bool white_to_move);
-    void get_pin_masks(bool white_to_move, Bitboard* pin_masks);
+    void get_pin_masks(bool white_to_move, Bitboard *pin_masks);
     Bitboard get_attackers(int square, bool white_attacker);
 };
 #endif

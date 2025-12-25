@@ -62,11 +62,17 @@ struct Move
     Move(int src, int tgt, int p, int cap = 0, int prom = 0, int ep = 0, int cas = 0)
         : source(src), target(tgt), piece(p), captured(cap), promotion(prom), enpassant(ep), castle(cas) {}
 };
-enum GameState
+struct GameState
+{
+    int castling_rights;
+    Bitboard enpassant_square;
+    int halfmove_clock;
+};
+enum Status
 {
     ONGOING,
     WHITE_WON,
     BLACK_WON,
-    DRAW
+    DRAW,
 };
 #endif

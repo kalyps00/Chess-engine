@@ -3,8 +3,8 @@
 
 int main()
 {
-    GameControler game;
-    game.run();
+    GameControler engine;
+    engine.run();
     return 0;
     // perft test
 }

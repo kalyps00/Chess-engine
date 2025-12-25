@@ -215,6 +215,7 @@ void Board::set_bit(int square, int piece)
 
 void Board::load_starting_position()
 {
+    history.clear();
     // White Pieces
     set_bit(a1, WHITE_ROOK);
     set_bit(h1, WHITE_ROOK);
@@ -249,6 +250,7 @@ void Board::load_starting_position()
 // function is pretty slow but we use it only once  - will improvein the future focused on readability
 void Board::load_fen_position(std::string fen)
 {
+    history.clear();
     // board
     int rank = 7, file = 0, idx = 0;
     while (fen[idx] != ' ')
@@ -334,6 +336,7 @@ void Board::load_fen_position(std::string fen)
 }
 void Board::make_move(const Move &move)
 {
+    history.push_back({castling_rights, enpassant_square, halfmove_clock});
     int source = move.source;
     int destination = move.target;
     int piece = board_arr[source];
@@ -350,7 +353,6 @@ void Board::make_move(const Move &move)
     {
         castling_rights &= ~0b1100;
     }
-    // might be bugged changed rook masks
     else if (piece == WHITE_ROOK)
     {
         if (source == h1)
@@ -457,7 +459,80 @@ void Board::make_move(const Move &move)
     white_to_move = !white_to_move;
     update_bitboards();
 }
+void Board::undo_move(const Move &move)
+{
 
+    if (history.empty())
+    {
+        return;
+    }
+    int source = move.source;
+    int destination = move.target;
+    int piece = board_arr[destination];
+
+    GameState last_state = history.back();
+    history.pop_back();
+    castling_rights = last_state.castling_rights;
+    enpassant_square = last_state.enpassant_square;
+    halfmove_clock = last_state.halfmove_clock;
+    white_to_move = !white_to_move;
+    if (!white_to_move)
+    {
+        fullmove_clock--;
+    }
+
+    // remove piece
+    if (move.promotion)
+    {
+        piece = white_to_move ? WHITE_PAWN : BLACK_PAWN;
+        bitboards[move.promotion] &= ~(1ULL << destination);
+    }
+    else
+    {
+        bitboards[piece] &= ~(1ULL << destination);
+    }
+    board_arr[destination] = EMPTY;
+    // place piece at source square
+    bitboards[piece] |= (1ULL << source);
+    board_arr[source] = piece;
+
+    // place captured piece
+    if (move.captured != EMPTY && !move.enpassant)
+    {
+        bitboards[move.captured] |= (1ULL << destination);
+        board_arr[destination] = move.captured;
+    }
+    // enpasant
+    if (move.enpassant)
+    {
+        int captured_sq = (white_to_move ? destination - 8 : destination + 8);
+        bitboards[move.captured] |= (1ULL << captured_sq);
+        board_arr[captured_sq] = move.captured;
+    }
+    // casting
+    if (move.castle)
+    {
+        int rook_dst, rook_src, rook_piece = white_to_move ? WHITE_ROOK : BLACK_ROOK;
+
+        if (move.castle == 1)
+        {
+            rook_dst = (white_to_move ? f1 : f8);
+            rook_src = (white_to_move ? h1 : h8);
+        }
+        else
+        {
+            rook_dst = (white_to_move ? d1 : d8);
+            rook_src = (white_to_move ? a1 : a8);
+        }
+        // remove rook king was moved in upper part
+        bitboards[rook_piece] &= ~(1ULL << rook_dst);
+        board_arr[rook_dst] = EMPTY;
+        // place rook
+        bitboards[rook_piece] |= (1ULL << rook_src);
+        board_arr[rook_src] = rook_piece;
+    }
+    update_bitboards();
+}
 bool Board::is_square_attacked(int square, bool by_white)
 {
     // Check pawn attacks
