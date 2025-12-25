@@ -18,6 +18,11 @@ private:
     sf::Vector2i currentMousePos;
     std::vector<Move> validMoves;
 
+    // Promotion state
+    bool isPromoting = false;
+    int promotionSource = -1;
+    int promotionTarget = -1;
+
     void render();
     void handleEvents();
 

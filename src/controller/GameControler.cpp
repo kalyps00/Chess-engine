@@ -23,6 +23,56 @@ void GameControler::handleEvents()
         if (event.type == sf::Event::Closed)
             window.close();
 
+        if (isPromoting)
+        {
+            if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left)
+            {
+                int x = event.mouseButton.x;
+                int y = event.mouseButton.y;
+
+                // Calculate clicked piece in promotion menu
+                int file = promotionTarget % 8;
+                int rank = promotionTarget / 8;
+                int visual_rank = 7 - rank;
+
+                int menu_x = file * BoardRender::SQUARE_SIZE;
+                int start_y = visual_rank * BoardRender::SQUARE_SIZE;
+                bool white = board.is_white_to_move();
+                if (!white)
+                    start_y = (visual_rank - 3) * BoardRender::SQUARE_SIZE;
+
+                if (x >= menu_x && x < menu_x + BoardRender::SQUARE_SIZE &&
+                    y >= start_y && y < start_y + 4 * BoardRender::SQUARE_SIZE)
+                {
+                    int clicked_index = (y - start_y) / BoardRender::SQUARE_SIZE;
+                    int promotions[] = {
+                        white ? WHITE_QUEEN : BLACK_QUEEN,
+                        white ? WHITE_ROOK : BLACK_ROOK,
+                        white ? WHITE_BISHOP : BLACK_BISHOP,
+                        white ? WHITE_KNIGHT : BLACK_KNIGHT};
+
+                    int selected_piece = promotions[clicked_index];
+
+                    // Find and execute the move
+                    for (const auto &move : validMoves)
+                    {
+                        if (move.source == promotionSource && move.target == promotionTarget && move.promotion == selected_piece)
+                        {
+                            board.make_move(move);
+                            break;
+                        }
+                    }
+                    isPromoting = false;
+                }
+                else
+                {
+                    // Clicked outside, cancel promotion
+                    isPromoting = false;
+                }
+            }
+            continue; // Skip other events while promoting
+        }
+
         if (event.type == sf::Event::MouseButtonPressed)
         {
             if (event.mouseButton.button == sf::Mouse::Left)
@@ -63,8 +113,18 @@ void GameControler::handleEvents()
                         {
                             if (move.source == draggedSquare && move.target == destSquare)
                             {
-                                board.make_move(move);
-                                break;
+                                if (move.promotion)
+                                {
+                                    isPromoting = true;
+                                    promotionSource = draggedSquare;
+                                    promotionTarget = destSquare;
+                                    break;
+                                }
+                                else
+                                {
+                                    board.make_move(move);
+                                    break;
+                                }
                             }
                         }
                     }
@@ -106,6 +166,11 @@ void GameControler::render()
     if (isDragging)
     {
         view.draw_dragged_piece(window, draggedPiece, currentMousePos);
+    }
+
+    if (isPromoting)
+    {
+        view.draw_promotion_menu(window, promotionTarget, board.is_white_to_move());
     }
 
     window.display();

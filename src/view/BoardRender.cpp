@@ -99,6 +99,46 @@ void BoardRender::draw_dragged_piece(sf::RenderWindow &window, int piece_type, s
         window.draw(piece_sprite[piece_type]);
     }
 }
+
+void BoardRender::draw_promotion_menu(sf::RenderWindow &window, int square, bool white_to_move)
+{
+    int file = square % 8;
+    int rank = square / 8;
+    int visual_rank = 7 - rank;
+
+    // Background for the menu
+    sf::RectangleShape background;
+    background.setSize(sf::Vector2f(SQUARE_SIZE, SQUARE_SIZE * 4));
+
+    // If white (at top), draw downwards. If black (at bottom), draw upwards.
+    int start_y = visual_rank * SQUARE_SIZE;
+
+    // Adjust start_y for black to draw upwards from the bottom square
+    if (!white_to_move)
+    {
+        start_y = (visual_rank - 3) * SQUARE_SIZE;
+    }
+
+    background.setPosition(file * SQUARE_SIZE, start_y);
+    background.setFillColor(sf::Color(255, 255, 255));
+    background.setOutlineThickness(2);
+    background.setOutlineColor(sf::Color::Black);
+    window.draw(background);
+
+    int pieces[] = {
+        white_to_move ? WHITE_QUEEN : BLACK_QUEEN,
+        white_to_move ? WHITE_ROOK : BLACK_ROOK,
+        white_to_move ? WHITE_BISHOP : BLACK_BISHOP,
+        white_to_move ? WHITE_KNIGHT : BLACK_KNIGHT};
+
+    for (int i = 0; i < 4; i++)
+    {
+        int y_pos = start_y + i * SQUARE_SIZE;
+        piece_sprite[pieces[i]].setPosition(file * SQUARE_SIZE, y_pos);
+        window.draw(piece_sprite[pieces[i]]);
+    }
+}
+
 int BoardRender::get_square_from_pixel(int x, int y)
 {
     int file = x / SQUARE_SIZE;
