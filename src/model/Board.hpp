@@ -42,6 +42,9 @@ private:
     int halfmove_clock = 0;
     int fullmove_clock = 1;
     std::vector<GameState> history;
+    std::vector<Move> current_legal_moves;
+    Status current_game_status;
+    void update_game_state();
 
 public:
     Board();
@@ -56,5 +59,8 @@ public:
     Bitboard get_check_mask(bool white_to_move);
     void get_pin_masks(bool white_to_move, Bitboard *pin_masks);
     Bitboard get_attackers(int square, bool white_attacker);
+    Status get_game_status() const { return current_game_status; }
+    const std::vector<Move> &get_legal_moves() const { return current_legal_moves; }
+    bool has_insufficient_material();
 };
 #endif

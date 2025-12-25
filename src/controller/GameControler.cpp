@@ -1,4 +1,5 @@
 #include "GameControler.hpp"
+#include <iostream>
 
 GameControler::GameControler() : window(sf::VideoMode(BoardRender::SQUARE_SIZE * 8, BoardRender::SQUARE_SIZE * 8), "Chess"),
                                  board(), view()
@@ -53,12 +54,12 @@ void GameControler::handleEvents()
 
                     int selected_piece = promotions[clicked_index];
 
-                    // Find and execute the move
                     for (const auto &move : validMoves)
                     {
                         if (move.source == promotionSource && move.target == promotionTarget && move.promotion == selected_piece)
                         {
                             board.make_move(move);
+                            check_game_over();
                             break;
                         }
                     }
@@ -92,7 +93,15 @@ void GameControler::handleEvents()
                             draggedSquare = square;
                             currentMousePos = sf::Vector2i(event.mouseButton.x, event.mouseButton.y);
 
-                            validMoves = MoveGenerator::generate_moves(board);
+                            validMoves.clear();
+                            const std::vector<Move> &legal_moves = board.get_legal_moves();
+                            for (const auto &move : legal_moves)
+                            {
+                                if (move.source == square)
+                                {
+                                    validMoves.push_back(move);
+                                }
+                            }
                         }
                     }
                 }
@@ -123,6 +132,7 @@ void GameControler::handleEvents()
                                 else
                                 {
                                     board.make_move(move);
+                                    check_game_over();
                                     break;
                                 }
                             }
@@ -174,4 +184,18 @@ void GameControler::render()
     }
 
     window.display();
+}
+
+void GameControler::check_game_over()
+{
+    Status status = board.get_game_status();
+    if (status != ONGOING)
+    {
+        if (status == WHITE_WON)
+            std::cout << "White Won!" << '\n';
+        else if (status == BLACK_WON)
+            std::cout << "Black Won!" << '\n';
+        else if (status == DRAW)
+            std::cout << "Draw!" << '\n';
+    }
 }

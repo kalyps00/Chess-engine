@@ -25,6 +25,7 @@ private:
 
     void render();
     void handleEvents();
+    void check_game_over();
 
 public:
     GameControler();

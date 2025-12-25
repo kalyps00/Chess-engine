@@ -1,4 +1,5 @@
 #include "Board.hpp"
+#include "MoveGenerator.hpp"
 
 Bitboard Board::knight_attacks[64];
 Bitboard Board::pawn_attacks[2][64];
@@ -25,6 +26,7 @@ Board::Board()
     load_starting_position();
     update_bitboards();
     white_to_move = true;
+    update_game_state();
 }
 
 void Board::init_pawn_attacks()
@@ -246,6 +248,8 @@ void Board::load_starting_position()
 
     // Initial castling rights
     castling_rights = 0b1111; // All castling rights available at start
+    update_bitboards();
+    update_game_state();
 }
 // function is pretty slow but we use it only once  - will improvein the future focused on readability
 void Board::load_fen_position(std::string fen)
@@ -333,6 +337,8 @@ void Board::load_fen_position(std::string fen)
     halfmove_clock = fen[idx++];
     // fullmove clock
     fullmove_clock = fen[idx];
+    update_bitboards();
+    update_game_state();
 }
 void Board::make_move(const Move &move)
 {
@@ -458,6 +464,7 @@ void Board::make_move(const Move &move)
 
     white_to_move = !white_to_move;
     update_bitboards();
+    update_game_state();
 }
 void Board::undo_move(const Move &move)
 {
@@ -532,6 +539,7 @@ void Board::undo_move(const Move &move)
         board_arr[rook_src] = rook_piece;
     }
     update_bitboards();
+    update_game_state();
 }
 bool Board::is_square_attacked(int square, bool by_white)
 {
@@ -691,5 +699,70 @@ void Board::get_pin_masks(bool white_to_move, Bitboard *pin_masks)
             pin_masks[pinned_sq] = path | (1ULL << pinner_sq);
         }
         pinner_candidates &= pinner_candidates - 1;
+    }
+}
+
+bool Board::has_insufficient_material()
+{
+    // If there are any pawns, rooks, or queens, it's not insufficient material
+    if (bitboards[WHITE_PAWN] | bitboards[BLACK_PAWN] |
+        bitboards[WHITE_ROOK] | bitboards[BLACK_ROOK] |
+        bitboards[WHITE_QUEEN] | bitboards[BLACK_QUEEN])
+        return false;
+
+    // Count minor pieces
+    int white_knights = __builtin_popcountll(bitboards[WHITE_KNIGHT]);
+    int white_bishops = __builtin_popcountll(bitboards[WHITE_BISHOP]);
+    int black_knights = __builtin_popcountll(bitboards[BLACK_KNIGHT]);
+    int black_bishops = __builtin_popcountll(bitboards[BLACK_BISHOP]);
+
+    int white_minors = white_knights + white_bishops;
+    int black_minors = black_knights + black_bishops;
+    int total_minors = white_minors + black_minors;
+
+    // K vs K
+    if (total_minors == 0)
+        return true;
+
+    // K+Minor vs K or K vs K+Minor
+    if (total_minors == 1)
+        return true;
+
+    return false;
+}
+
+void Board::update_game_state()
+{
+    current_legal_moves = MoveGenerator::generate_moves(*this);
+
+    // 1. 50-move rule
+    if (halfmove_clock >= 100)
+    {
+        current_game_status = DRAW;
+        return;
+    }
+
+    // 2. Insufficient material
+    if (has_insufficient_material())
+    {
+        current_game_status = DRAW;
+        return;
+    }
+
+    // 3. Checkmate / Stalemate
+    if (current_legal_moves.empty())
+    {
+        if (is_in_check(white_to_move))
+        {
+            current_game_status = white_to_move ? BLACK_WON : WHITE_WON;
+        }
+        else
+        {
+            current_game_status = DRAW;
+        }
+    }
+    else
+    {
+        current_game_status = ONGOING;
     }
 }

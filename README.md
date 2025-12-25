@@ -86,9 +86,9 @@ Chess-engine/
 - [x] GUI and Mouse Handling
 - [x] En Passant
 - [x] Castling
-- [ ] Check and Checkmate Detection
-- [ ] Choosing promotion piece
-- [ ] "Game Over" Logic
+- [x] Check and Checkmate Detection
+- [x] Choosing promotion piece
+- [x] "Game Over" Logic
 - [ ] Choosing playing side
 - [ ] Loading position from fen
 - [ ] UCI
