@@ -89,7 +89,13 @@ void MoveGenerator::generate_pawn_moves(Board &board, std::vector<Move> &moves, 
             {
                 int ep_square = __builtin_ctzll(ep_attacks);
                 int captured_pawn = white_to_move ? BLACK_PAWN : WHITE_PAWN;
-                moves.emplace_back(source_square, ep_square, pawn_type, captured_pawn, 0, 1);
+                Move move(source_square, ep_square, pawn_type, captured_pawn, 0, 1);
+                board.make_move(move);
+                if (!board.is_in_check(white_to_move))
+                {
+                    moves.emplace_back(move);
+                }
+                board.undo_move(move);
             }
         }
         // delete processed pawn
