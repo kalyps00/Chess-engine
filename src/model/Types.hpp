@@ -67,6 +67,7 @@ struct GameState
     int castling_rights;
     Bitboard enpassant_square;
     int halfmove_clock;
+    uint64_t zobrist_position_key;
 };
 enum Status
 {

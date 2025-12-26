@@ -5,10 +5,6 @@
 
 class Board;
 
-class FenParser
-{
-public:
-    static void load_fen_position(Board &board, const std::string &fen);
-};
+void load_fen_position(Board &board, const std::string &fen);
 
 #endif

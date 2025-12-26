@@ -35,3 +35,35 @@ void init_zobrist()
     }
     side_key = get_random_number();
 }
+uint64_t hash_position(Board &board)
+{
+    uint64_t key = 0ULL;
+
+    // Pieces
+    for (int square = 0; square < 64; square++)
+    {
+        int piece = board.board_arr[square];
+        if (piece != EMPTY)
+        {
+            key ^= piece_keys[piece][square];
+        }
+    }
+
+    // Castling rights
+    key ^= castling_keys[board.castling_rights];
+
+    // En passant
+    if (board.enpassant_square)
+    {
+        int file = __builtin_ctzll(board.enpassant_square) % 8;
+        key ^= enpassant_keys[file];
+    }
+
+    // Side to move
+    if (!board.white_to_move)
+    {
+        key ^= side_key;
+    }
+
+    return key;
+}

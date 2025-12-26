@@ -22,7 +22,7 @@ Board::Board()
     for (int i = 0; i < 64; i++)
         board_arr[i] = EMPTY;
 
-    FenParser::load_fen_position(*this, starting_fen);
+    load_fen_position(*this, starting_fen);
 }
 int Board::get_piece_at(int pos)
 {
@@ -42,7 +42,7 @@ void Board::set_bit(int square, int piece)
 }
 void Board::make_move(const Move &move)
 {
-    history.push_back({castling_rights, enpassant_square, halfmove_clock});
+    history.push_back({castling_rights, enpassant_square, halfmove_clock, current_zobrist_key});
     int source = move.source;
     int destination = move.target;
     int piece = board_arr[source];
@@ -50,6 +50,14 @@ void Board::make_move(const Move &move)
 
     if (piece == EMPTY)
         return;
+
+    // XOR out old enpassant
+    if (enpassant_square)
+    {
+        int file = __builtin_ctzll(enpassant_square) % 8;
+        current_zobrist_key ^= enpassant_keys[file];
+    }
+
     // remove castling rights if king or rook moves
     if (piece == WHITE_KING)
     {
@@ -74,12 +82,14 @@ void Board::make_move(const Move &move)
             castling_rights &= ~0b1000;
     }
     // Remove piece from source
+    current_zobrist_key ^= piece_keys[piece][source];
     bitboards[piece] &= ~(1ULL << source);
     board_arr[source] = EMPTY;
 
     if (captured != EMPTY && move.enpassant == 0)
     {
         // Remove captured piece
+        current_zobrist_key ^= piece_keys[captured][destination];
         bitboards[captured] &= ~(1ULL << destination);
 
         // Update castling rights if a rook is captured
@@ -108,6 +118,8 @@ void Board::make_move(const Move &move)
             int rook_piece = (piece == WHITE_KING) ? WHITE_ROOK : BLACK_ROOK;
 
             // Move rook
+            current_zobrist_key ^= piece_keys[rook_piece][rook_src];
+            current_zobrist_key ^= piece_keys[rook_piece][rook_dst];
             bitboards[rook_piece] &= ~(1ULL << rook_src);
             bitboards[rook_piece] |= (1ULL << rook_dst);
             board_arr[rook_src] = EMPTY;
@@ -121,6 +133,8 @@ void Board::make_move(const Move &move)
             int rook_piece = (piece == WHITE_KING) ? WHITE_ROOK : BLACK_ROOK;
 
             // Move rook
+            current_zobrist_key ^= piece_keys[rook_piece][rook_src];
+            current_zobrist_key ^= piece_keys[rook_piece][rook_dst];
             bitboards[rook_piece] &= ~(1ULL << rook_src);
             bitboards[rook_piece] |= (1ULL << rook_dst);
             board_arr[rook_src] = EMPTY;
@@ -130,6 +144,7 @@ void Board::make_move(const Move &move)
 
     // Place piece at destination
     int pieceToPlace = (move.promotion != 0) ? move.promotion : piece;
+    current_zobrist_key ^= piece_keys[pieceToPlace][destination];
     bitboards[pieceToPlace] |= (1ULL << destination);
     board_arr[destination] = pieceToPlace;
     // update  clock moves
@@ -155,12 +170,30 @@ void Board::make_move(const Move &move)
         else if (old_enpassant_mask && (1ULL << destination) == old_enpassant_mask)
         {
             int captured_pawn_sq = (piece == WHITE_PAWN) ? destination - 8 : destination + 8;
+            current_zobrist_key ^= piece_keys[captured][captured_pawn_sq];
             bitboards[captured] &= ~(1ULL << captured_pawn_sq);
             board_arr[captured_pawn_sq] = EMPTY;
         }
         // update here for perforamnce
         halfmove_clock = 0;
     }
+
+    // XOR in new castling rights
+    if (castling_rights != history.back().castling_rights)
+    {
+        current_zobrist_key ^= castling_keys[history.back().castling_rights];
+        current_zobrist_key ^= castling_keys[castling_rights];
+    }
+
+    // XOR in new enpassant
+    if (enpassant_square)
+    {
+        int file = __builtin_ctzll(enpassant_square) % 8;
+        current_zobrist_key ^= enpassant_keys[file];
+    }
+
+    // Side to move
+    current_zobrist_key ^= side_key;
 
     white_to_move = !white_to_move;
     update_bitboards();
@@ -182,6 +215,7 @@ void Board::undo_move(const Move &move)
     castling_rights = last_state.castling_rights;
     enpassant_square = last_state.enpassant_square;
     halfmove_clock = last_state.halfmove_clock;
+    current_zobrist_key = last_state.zobrist_position_key;
     white_to_move = !white_to_move;
     if (!white_to_move)
     {

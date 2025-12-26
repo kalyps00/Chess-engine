@@ -2,23 +2,20 @@
 #include "Board.hpp"
 #include <sstream>
 
-void FenParser::load_fen_position(Board &board, const std::string &fen)
+void load_fen_position(Board &board, const std::string &fen)
 {
-    // 1. Resetowanie całej planszy
     board.history.clear();
     for (int i = 0; i < 13; i++)
         board.bitboards[i] = 0ULL;
     for (int i = 0; i < 64; i++)
         board.board_arr[i] = EMPTY;
 
-    // 2. Ekstrakcja danych (strumień sam ogarnia spacje)
     std::stringstream ss(fen);
     std::string board_str, turn_str, castle_str, ep_str;
     int half_clock = 0, full_clock = 1;
 
     ss >> board_str >> turn_str >> castle_str >> ep_str >> half_clock >> full_clock;
 
-    // 3. Parsowanie układu figur
     int rank = 7, file = 0;
     for (char c : board_str)
     {
@@ -34,7 +31,6 @@ void FenParser::load_fen_position(Board &board, const std::string &fen)
         else
         {
             int piece = EMPTY;
-            // Mapping znak -> figura
             if (c == 'P')
                 piece = WHITE_PAWN;
             else if (c == 'N')
@@ -68,7 +64,6 @@ void FenParser::load_fen_position(Board &board, const std::string &fen)
         }
     }
 
-    // 4. Ustawianie stanu gry
     board.white_to_move = (turn_str == "w");
 
     board.castling_rights = 0;
@@ -98,4 +93,5 @@ void FenParser::load_fen_position(Board &board, const std::string &fen)
 
     board.update_bitboards();
     board.update_game_state();
+    board.current_zobrist_key = hash_position(board);
 }

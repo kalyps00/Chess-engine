@@ -9,7 +9,8 @@ class MoveGenerator;
 class Board
 {
     friend class MoveGenerator;
-    friend class FenParser;
+    friend void load_fen_position(Board &board, const std::string &fen);
+    friend uint64_t hash_position(Board &board);
 
 private:
     // Bitboard representation empty on 0, pieces 1-12
@@ -52,6 +53,6 @@ public:
     const std::vector<Move> &get_legal_moves() const { return current_legal_moves; }
     bool has_insufficient_material();
     static uint64_t get_uint64_random_number();
-    std::string starting_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    const std::string starting_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 };
 #endif
