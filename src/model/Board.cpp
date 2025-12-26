@@ -1,21 +1,19 @@
 #include "Board.hpp"
 #include "MoveGenerator.hpp"
+#include "Zobrist.hpp"
+#include "Attacks.hpp"
+#include "FenParser.hpp"
 #include <sstream>
 
-Bitboard Board::knight_attacks[64];
-Bitboard Board::pawn_attacks[2][64];
-Bitboard Board::king_attacks[64];
-Bitboard Board::between[64][64];
+std::vector<Move> Board::current_legal_moves;
 
 Board::Board()
 {
     static bool initialized = false;
     if (!initialized)
     {
-        init_knight_attacks();
-        init_pawn_attacks();
-        init_king_attacks();
-        init_between();
+        init_attacks();
+        init_zobrist();
 
         initialized = true;
     }
@@ -24,177 +22,7 @@ Board::Board()
     for (int i = 0; i < 64; i++)
         board_arr[i] = EMPTY;
 
-    load_fen_position(starting_fen);
-}
-
-void Board::init_pawn_attacks()
-{
-    for (int square = 0; square < 64; square++)
-    {
-        int rank = square / 8;
-        int file = square % 8;
-
-        // Capture up-left (file-1, rank+1) -> +7
-        if (rank < 7 && file > 0)
-            pawn_attacks[0][square] |= (1ULL << (square + 7));
-        // Capture up-right (file+1, rank+1) -> +9
-        if (rank < 7 && file < 7)
-            pawn_attacks[0][square] |= (1ULL << (square + 9));
-
-        // Black pawns (index 1)
-        // Capture down-left (file-1, rank-1) -> -9
-        if (rank > 0 && file > 0)
-            pawn_attacks[1][square] |= (1ULL << (square - 9));
-        // Capture down-right (file+1, rank-1) -> -7
-        if (rank > 0 && file < 7)
-            pawn_attacks[1][square] |= (1ULL << (square - 7));
-    }
-}
-
-void Board::init_knight_attacks()
-{
-    for (int square = 0; square < 64; square++)
-    {
-        Bitboard attacks = 0ULL;
-        int rank = square / 8;
-        int file = square % 8;
-
-        // All 8 possible knight moves (dx, dy)
-        int jumps[8][2] = {
-            {1, 2}, {-1, 2}, {1, -2}, {-1, -2}, {2, 1}, {-2, 1}, {2, -1}, {-2, -1}};
-
-        for (int i = 0; i < 8; i++)
-        {
-            int target_file = file + jumps[i][0];
-            int target_rank = rank + jumps[i][1];
-
-            if (target_rank >= 0 && target_rank < 8 && target_file >= 0 && target_file < 8)
-            {
-                int target_square = target_rank * 8 + target_file;
-                attacks |= (1ULL << target_square);
-            }
-        }
-        knight_attacks[square] = attacks;
-    }
-}
-
-void Board::init_king_attacks()
-
-{
-    for (int square = 0; square < 64; square++)
-    {
-        Bitboard attacks = 0ULL;
-        int rank = square / 8;
-        int file = square % 8;
-
-        // All 8 possible king moves (dx, dy)
-        int moves[8][2] = {
-            {1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1}, {0, -1}, {1, -1}};
-
-        for (int i = 0; i < 8; i++)
-        {
-            int target_file = file + moves[i][0];
-            int target_rank = rank + moves[i][1];
-
-            if (target_rank >= 0 && target_rank < 8 && target_file >= 0 && target_file < 8)
-            {
-                int target_square = target_rank * 8 + target_file;
-                attacks |= (1ULL << target_square);
-            }
-        }
-        king_attacks[square] = attacks;
-    }
-}
-void Board::init_between()
-{
-    for (int sq1 = 0; sq1 < 64; sq1++)
-    {
-        for (int sq2 = 0; sq2 < 64; sq2++)
-        {
-            between[sq1][sq2] = 0ULL;
-            if (sq1 == sq2)
-            {
-                continue;
-            }
-            int file1 = sq1 % 8, file2 = sq2 % 8;
-            int rank1 = sq1 / 8, rank2 = sq2 / 8;
-            int dx = file2 - file1, dy = rank2 - rank1;
-            // same file, rank, \ and /
-            if (dx != 0 && dy != 0 && abs(dx) != abs(dy))
-            {
-                continue;
-            }
-            int step_x = (dx == 0) ? 0 : (dx > 0 ? 1 : -1);
-            int step_y = (dy == 0) ? 0 : (dy > 0 ? 1 : -1);
-            int step = step_y * 8 + step_x;
-            int current = sq1 + step;
-            while (current != sq2 && current >= 0 && current < 64)
-            {
-                between[sq1][sq2] |= (1ULL << current);
-                current += step;
-            }
-        }
-    }
-}
-Bitboard Board::get_rook_attacks(int square, Bitboard occupied)
-{
-    int directions[4] = {8, -8, 1, -1}; // Up, Down, Right, Left
-    Bitboard attacks = 0ULL;
-
-    for (int dir = 0; dir < 4; dir++)
-    {
-        int current_square = square;
-        while (true)
-        {
-            int rank = current_square / 8;
-            current_square += directions[dir];
-            if (current_square < 0 || current_square >= 64)
-                break;
-            int new_rank = current_square / 8;
-
-            // Ensure we don't wrap around the board horizontally
-            if ((directions[dir] == 1 || directions[dir] == -1) && rank != new_rank)
-                break;
-
-            attacks |= (1ULL << current_square);
-
-            if (occupied & (1ULL << current_square))
-                break;
-        }
-    }
-    return attacks;
-}
-Bitboard Board::get_bishop_attacks(int square, Bitboard occupied)
-{
-    int directions[4] = {9, 7, -9, -7}; // Up-Right, Up-Left, Down-Right, Down-Left
-    Bitboard attacks = 0ULL;
-
-    for (int dir = 0; dir < 4; dir++)
-    {
-        int current_square = square;
-        while (true)
-        {
-            int file = current_square % 8;
-            current_square += directions[dir];
-            if (current_square < 0 || current_square >= 64)
-                break;
-            int new_file = current_square % 8;
-
-            // Ensure we don't wrap around the board horizontally
-            if (abs(new_file - file) != 1)
-                break;
-
-            attacks |= (1ULL << current_square);
-
-            if (occupied & (1ULL << current_square))
-                break;
-        }
-    }
-    return attacks;
-}
-Bitboard Board::get_queen_attacks(int square, Bitboard occupied)
-{
-    return get_rook_attacks(square, occupied) | get_bishop_attacks(square, occupied);
+    FenParser::load_fen_position(*this, starting_fen);
 }
 int Board::get_piece_at(int pos)
 {
@@ -211,98 +39,6 @@ void Board::set_bit(int square, int piece)
 
     // Update board array
     board_arr[square] = piece;
-}
-void Board::load_fen_position(std::string fen)
-{
-    history.clear();
-    for (int i = 0; i < 13; i++)
-        bitboards[i] = 0ULL;
-    for (int i = 0; i < 64; i++)
-        board_arr[i] = EMPTY;
-
-    std::stringstream ss(fen);
-    std::string board_str, turn_str, castle_str, ep_str;
-    int half_clock = 0, full_clock = 1;
-
-    ss >> board_str >> turn_str >> castle_str >> ep_str >> half_clock >> full_clock;
-
-    int rank = 7, file = 0;
-    for (char c : board_str)
-    {
-        if (c == '/')
-        {
-            rank--;
-            file = 0;
-        }
-        else if (isdigit(c))
-        {
-            file += (c - '0');
-        }
-        else
-        {
-            int piece = EMPTY;
-            if (c == 'P')
-                piece = WHITE_PAWN;
-            else if (c == 'N')
-                piece = WHITE_KNIGHT;
-            else if (c == 'B')
-                piece = WHITE_BISHOP;
-            else if (c == 'R')
-                piece = WHITE_ROOK;
-            else if (c == 'Q')
-                piece = WHITE_QUEEN;
-            else if (c == 'K')
-                piece = WHITE_KING;
-            else if (c == 'p')
-                piece = BLACK_PAWN;
-            else if (c == 'n')
-                piece = BLACK_KNIGHT;
-            else if (c == 'b')
-                piece = BLACK_BISHOP;
-            else if (c == 'r')
-                piece = BLACK_ROOK;
-            else if (c == 'q')
-                piece = BLACK_QUEEN;
-            else if (c == 'k')
-                piece = BLACK_KING;
-
-            if (piece != EMPTY)
-            {
-                set_bit(rank * 8 + file, piece);
-                file++;
-            }
-        }
-    }
-
-    white_to_move = (turn_str == "w");
-
-    castling_rights = 0;
-    if (castle_str != "-")
-    {
-        if (castle_str.find('K') != std::string::npos)
-            castling_rights |= 1;
-        if (castle_str.find('Q') != std::string::npos)
-            castling_rights |= 2;
-        if (castle_str.find('k') != std::string::npos)
-            castling_rights |= 4;
-        if (castle_str.find('q') != std::string::npos)
-            castling_rights |= 8;
-    }
-
-    enpassant_square = 0ULL;
-    if (ep_str != "-" && ep_str.length() >= 2)
-    {
-        int f = ep_str[0] - 'a';
-        int r = ep_str[1] - '1';
-        if (f >= 0 && f < 8 && r >= 0 && r < 8)
-            enpassant_square = (1ULL << (r * 8 + f));
-    }
-
-    halfmove_clock = half_clock;
-    fullmove_clock = full_clock;
-
-    update_bitboards();
-    update_game_state();
 }
 void Board::make_move(const Move &move)
 {

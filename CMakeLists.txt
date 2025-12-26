@@ -30,6 +30,9 @@ set(SOURCES
     # Model - logika gry
     ${SRC_DIR}/model/Board.cpp
     ${SRC_DIR}/model/MoveGenerator.cpp
+    ${SRC_DIR}/model/Attacks.cpp
+    ${SRC_DIR}/model/FenParser.cpp
+    ${SRC_DIR}/model/Zobrist.cpp
     # View - interfejs graficzny
     ${SRC_DIR}/view/BoardRender.cpp
     # Controller - kontrola gry
@@ -41,6 +44,9 @@ set(HEADERS
     # Model headers
     ${SRC_DIR}/model/Board.hpp
     ${SRC_DIR}/model/Types.hpp
+    ${SRC_DIR}/model/Attacks.hpp
+    ${SRC_DIR}/model/FenParser.hpp
+    ${SRC_DIR}/model/Zobrist.hpp
     # View headers  
     ${SRC_DIR}/view/BoardRender.hpp
     # Controller headers

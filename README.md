@@ -96,6 +96,7 @@ Chess-engine/
 - [ ] **Evaluation Function** (Material + Positional heuristics)
 - [ ] UCI Protocol (Universal Chess Interface)
 - [ ] Choosing playing side / Restart Game
+- [ ] Indicating last move
 
 ## ⚡ Optimizations to do
 

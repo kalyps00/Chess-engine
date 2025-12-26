@@ -9,23 +9,13 @@ class MoveGenerator;
 class Board
 {
     friend class MoveGenerator;
+    friend class FenParser;
 
 private:
     // Bitboard representation empty on 0, pieces 1-12
     Bitboard bitboards[13];
     int board_arr[64];
 
-    // Precomputed attack tables
-    static Bitboard knight_attacks[64], pawn_attacks[2][64], king_attacks[64], between[64][64];
-    // Initialization functions
-    static void init_knight_attacks();
-    static void init_pawn_attacks();
-    static void init_king_attacks();
-    static void init_between();
-    // Sliding piece attack generation
-    Bitboard get_rook_attacks(int square, Bitboard occupied);
-    Bitboard get_bishop_attacks(int square, Bitboard occupied);
-    Bitboard get_queen_attacks(int square, Bitboard occupied);
     // Additional bitboards
     Bitboard
         white_pieces, // 1-5
@@ -42,14 +32,14 @@ private:
     int halfmove_clock = 0;
     int fullmove_clock = 1;
     std::vector<GameState> history;
-    std::vector<Move> current_legal_moves;
+    uint64_t current_zobrist_key;
+    static std::vector<Move> current_legal_moves;
     Status current_game_status;
     void update_game_state();
 
 public:
     Board();
     int get_piece_at(int pos);
-    void load_fen_position(std::string fen);
     std::string export_fen_position(); // tbi
     void make_move(const Move &move);
     void undo_move(const Move &move);
@@ -61,6 +51,7 @@ public:
     Status get_game_status() const { return current_game_status; }
     const std::vector<Move> &get_legal_moves() const { return current_legal_moves; }
     bool has_insufficient_material();
+    static uint64_t get_uint64_random_number();
     std::string starting_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 };
 #endif

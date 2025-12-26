@@ -1,4 +1,5 @@
 #include "MoveGenerator.hpp"
+#include "Attacks.hpp"
 
 std::vector<Move> MoveGenerator::generate_moves(Board &board)
 {
@@ -57,7 +58,7 @@ void MoveGenerator::generate_pawn_moves(Board &board, std::vector<Move> &moves, 
             }
         }
         // Captures
-        Bitboard pawn_attacks_mask = Board::pawn_attacks[white_to_move ? 0 : 1][source_square];
+        Bitboard pawn_attacks_mask = pawn_attacks[white_to_move ? 0 : 1][source_square];
         Bitboard capture_targets = pawn_attacks_mask & enemy_pieces_mask;
 
         while (capture_targets)
@@ -112,7 +113,7 @@ void MoveGenerator::generate_knight_moves(Board &board, std::vector<Move> &moves
     while (knights_mask)
     {
         int source_square = __builtin_ctzll(knights_mask);
-        Bitboard attacks = Board::knight_attacks[source_square] & ~own_pieces_mask;
+        Bitboard attacks = knight_attacks[source_square] & ~own_pieces_mask;
         attacks &= (check_mask & pin_masks[source_square]);
 
         while (attacks)
@@ -136,7 +137,7 @@ void MoveGenerator::generate_king_moves(Board &board, std::vector<Move> &moves)
         return;
     }
     int source_square = __builtin_ctzll(king_mask);
-    Bitboard attacks = Board::king_attacks[source_square] & ~own_pieces_mask;
+    Bitboard attacks = king_attacks[source_square] & ~own_pieces_mask;
 
     while (attacks)
     {
@@ -221,12 +222,12 @@ void MoveGenerator::generate_sliding_moves(Board &board, std::vector<Move> &move
             Bitboard attacks = 0ULL;
 
             if (piece_type == WHITE_BISHOP || piece_type == BLACK_BISHOP)
-                attacks = board.get_bishop_attacks(source_square, board.all_pieces);
+                attacks = get_bishop_attacks(source_square, board.all_pieces);
             else if (piece_type == WHITE_ROOK || piece_type == BLACK_ROOK)
-                attacks = board.get_rook_attacks(source_square, board.all_pieces);
+                attacks = get_rook_attacks(source_square, board.all_pieces);
             else // Queen
-                attacks = board.get_bishop_attacks(source_square, board.all_pieces) |
-                          board.get_rook_attacks(source_square, board.all_pieces);
+                attacks = get_bishop_attacks(source_square, board.all_pieces) |
+                          get_rook_attacks(source_square, board.all_pieces);
 
             attacks &= ~own_pieces_mask;
             attacks &= (check_mask & pin_masks[source_square]);
