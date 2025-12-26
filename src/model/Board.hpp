@@ -61,5 +61,6 @@ public:
     Status get_game_status() const { return current_game_status; }
     const std::vector<Move> &get_legal_moves() const { return current_legal_moves; }
     bool has_insufficient_material();
+    std::string starting_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 };
 #endif

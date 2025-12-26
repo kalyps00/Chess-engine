@@ -1,5 +1,6 @@
 #include "Board.hpp"
 #include "MoveGenerator.hpp"
+#include <sstream>
 
 Bitboard Board::knight_attacks[64];
 Bitboard Board::pawn_attacks[2][64];
@@ -17,13 +18,13 @@ Board::Board()
         init_between();
 
         initialized = true;
-    } // Clear bitboards and Board array
+    }
     for (int i = 0; i < 13; i++)
         bitboards[i] = 0ULL;
     for (int i = 0; i < 64; i++)
         board_arr[i] = EMPTY;
 
-    load_fen_position("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    load_fen_position(starting_fen);
 }
 
 void Board::init_pawn_attacks()
@@ -211,93 +212,95 @@ void Board::set_bit(int square, int piece)
     // Update board array
     board_arr[square] = piece;
 }
-
-// function is pretty slow but we use it only once  - will improvein the future focused on readability
 void Board::load_fen_position(std::string fen)
 {
     history.clear();
-    // board
-    int rank = 7, file = 0, idx = 0;
-    while (fen[idx] != ' ')
+    for (int i = 0; i < 13; i++)
+        bitboards[i] = 0ULL;
+    for (int i = 0; i < 64; i++)
+        board_arr[i] = EMPTY;
+
+    std::stringstream ss(fen);
+    std::string board_str, turn_str, castle_str, ep_str;
+    int half_clock = 0, full_clock = 1;
+
+    ss >> board_str >> turn_str >> castle_str >> ep_str >> half_clock >> full_clock;
+
+    int rank = 7, file = 0;
+    for (char c : board_str)
     {
-        int square_idx = rank * 8 + file;
-        char c = fen[idx++];
-        switch (c)
+        if (c == '/')
         {
-        case '/':
             rank--;
-            break;
-        case 'p':
-        case 'P':
-            set_bit(square_idx, c == 'P' ? WHITE_PAWN : BLACK_PAWN);
-            break;
-        case 'n':
-        case 'N':
-            set_bit(square_idx, c == 'N' ? WHITE_KNIGHT : BLACK_KNIGHT);
-            break;
-        case 'b':
-        case 'B':
-            set_bit(square_idx, c == 'B' ? WHITE_BISHOP : BLACK_BISHOP);
-            break;
-        case 'r':
-        case 'R':
-            set_bit(square_idx, c == 'R' ? WHITE_ROOK : BLACK_ROOK);
-            break;
-        case 'q':
-        case 'Q':
-            set_bit(square_idx, c == 'Q' ? WHITE_QUEEN : BLACK_QUEEN);
-            break;
-        case 'k':
-        case 'K':
-            set_bit(square_idx, c == 'K' ? WHITE_KING : BLACK_KING);
-            break;
-        default:
-            file += (c - '0') - 1;
+            file = 0;
         }
-        file++;
-        file %= 8;
-    }
-    idx++;
-    // game state
-    // turn
-    white_to_move = fen[idx++] == 'w' ? true : false;
-    // castling
-    if (fen[idx] == '-')
-    {
-        castling_rights = 0;
-    }
-    else
-    {
-        while (fen[idx] != ' ')
+        else if (isdigit(c))
         {
-            char c = fen[idx++];
-            switch (c)
+            file += (c - '0');
+        }
+        else
+        {
+            int piece = EMPTY;
+            if (c == 'P')
+                piece = WHITE_PAWN;
+            else if (c == 'N')
+                piece = WHITE_KNIGHT;
+            else if (c == 'B')
+                piece = WHITE_BISHOP;
+            else if (c == 'R')
+                piece = WHITE_ROOK;
+            else if (c == 'Q')
+                piece = WHITE_QUEEN;
+            else if (c == 'K')
+                piece = WHITE_KING;
+            else if (c == 'p')
+                piece = BLACK_PAWN;
+            else if (c == 'n')
+                piece = BLACK_KNIGHT;
+            else if (c == 'b')
+                piece = BLACK_BISHOP;
+            else if (c == 'r')
+                piece = BLACK_ROOK;
+            else if (c == 'q')
+                piece = BLACK_QUEEN;
+            else if (c == 'k')
+                piece = BLACK_KING;
+
+            if (piece != EMPTY)
             {
-            case 'Q':
-                castling_rights |= 0b0010;
-                break;
-            case 'K':
-                castling_rights |= 0b0001;
-                break;
-            case 'q':
-                castling_rights |= 0b1000;
-                break;
-            case 'k':
-                castling_rights |= 0b0100;
-                break;
+                set_bit(rank * 8 + file, piece);
+                file++;
             }
         }
     }
-    idx++;
-    // enpasant square
-    if (fen[idx++] != '-')
+
+    white_to_move = (turn_str == "w");
+
+    castling_rights = 0;
+    if (castle_str != "-")
     {
-        enpassant_square = (1ULL << (Square)fen[idx]);
+        if (castle_str.find('K') != std::string::npos)
+            castling_rights |= 1;
+        if (castle_str.find('Q') != std::string::npos)
+            castling_rights |= 2;
+        if (castle_str.find('k') != std::string::npos)
+            castling_rights |= 4;
+        if (castle_str.find('q') != std::string::npos)
+            castling_rights |= 8;
     }
-    // halfmove clock
-    halfmove_clock = fen[idx++];
-    // fullmove clock
-    fullmove_clock = fen[idx];
+
+    enpassant_square = 0ULL;
+    if (ep_str != "-" && ep_str.length() >= 2)
+    {
+        int f = ep_str[0] - 'a';
+        int r = ep_str[1] - '1';
+        if (f >= 0 && f < 8 && r >= 0 && r < 8)
+            enpassant_square = (1ULL << (r * 8 + f));
+    }
+
+    halfmove_clock = half_clock;
+    fullmove_clock = full_clock;
+
     update_bitboards();
     update_game_state();
 }
@@ -617,7 +620,7 @@ Bitboard Board::get_check_mask(bool white_to_move)
     // Mask is: squares between king and attacker OR the attacker square itself
     return between[king_sq][attacker_sq] | (1ULL << attacker_sq);
 }
-
+// repetetive code
 void Board::get_pin_masks(bool white_to_move, Bitboard *pin_masks)
 {
     // Default

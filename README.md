@@ -88,16 +88,21 @@ Chess-engine/
 - [x] Castling
 - [x] Check and Checkmate Detection
 - [x] Choosing promotion piece
-- [x] "Game Over" Logic
-- [ ] Loading position from fen
-- [ ] UCI
-- [ ] Simple AI (Minimax)
-- [ ] Choosing playing side
+- [x] "Game Over" Logic (Checkmate, Stalemate, 50-move rule, Insufficient Material)
+- [x] Loading position from FEN
+- [ ] 3 move rule
+- [ ] **Threefold Repetition** (Requires Zobrist Hashing)
+- [ ] **Search Algorithm** (Minimax / Negamax with Alpha-Beta Pruning)
+- [ ] **Evaluation Function** (Material + Positional heuristics)
+- [ ] UCI Protocol (Universal Chess Interface)
+- [ ] Choosing playing side / Restart Game
 
-## Optimalizations to do:
+## ⚡ Optimizations to do
 
-- [ ] Magic Bitboards
-- [ ] Zobrist hashing
+- [ ] **Zobrist Hashing** (Fast position comparison & Transposition Table key)
+- [ ] **Transposition Table** (Caching search results)
+- [ ] **Move Ordering** (MVV-LVA, Killer Moves, History Heuristic)
+- [ ] **Magic Bitboards** (Faster sliding piece attack generation)
+- [ ] **Quiescence Search** (Solving horizon effect in tactical positions)
+- [ ] **Iterative Deepening** (Time management)
 - [ ] Incremental Updates
-- [ ] Move ordering
-- [ ] Piece lists (if needed)
