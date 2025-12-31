@@ -5,9 +5,9 @@
 #include <chrono>
 void test()
 {
+    std::string kiwi = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ";
     Board test_board;
-    // load_fen_position(test_board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-
+    load_fen_position(test_board, kiwi);
     int depth = 5;
 
     std::cout << "Perft test depth: " << depth << std::endl;

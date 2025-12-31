@@ -200,7 +200,7 @@ void Board::make_move(const Move &move, bool update_state)
     if (update_state)
         update_game_state();
 }
-void Board::undo_move(const Move &move)
+void Board::undo_move(const Move &move, bool update_state)
 {
 
     if (history.empty())
@@ -274,7 +274,8 @@ void Board::undo_move(const Move &move)
         board_arr[rook_src] = rook_piece;
     }
     update_bitboards();
-    update_game_state();
+    if (update_state)
+        update_game_state();
 }
 bool Board::is_square_attacked(int square, bool by_white)
 {
@@ -409,9 +410,9 @@ void Board::get_pin_masks(bool white_to_move, Bitboard *pin_masks)
     {
         int pinner_sq = __builtin_ctzll(pinner_candidates);
         Bitboard path = between[king_sq][pinner_sq];
-        Bitboard pinned = path & my_pieces;
-
-        if (__builtin_popcountll(pinned) == 1)
+        Bitboard pinned = path & all_pieces;
+        // was __builtin_popcountll(pinned) == 1
+        if (pinned && !(pinned & (pinned - 1)) && (pinned & my_pieces))
         {
             int pinned_sq = __builtin_ctzll(pinned);
             // Movement mask for this piece is the attack line (including pinner)
@@ -426,9 +427,9 @@ void Board::get_pin_masks(bool white_to_move, Bitboard *pin_masks)
     {
         int pinner_sq = __builtin_ctzll(pinner_candidates);
         Bitboard path = between[king_sq][pinner_sq];
-        Bitboard pinned = path & my_pieces;
+        Bitboard pinned = path & all_pieces;
 
-        if (__builtin_popcountll(pinned) == 1)
+        if (__builtin_popcountll(pinned) == 1 && (pinned & my_pieces))
         {
             int pinned_sq = __builtin_ctzll(pinned);
             pin_masks[pinned_sq] = path | (1ULL << pinner_sq);

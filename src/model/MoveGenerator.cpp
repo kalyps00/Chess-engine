@@ -12,7 +12,6 @@ std::vector<Move> MoveGenerator::generate_moves(Board &board)
     generate_pawn_moves(board, moves, check_mask, pin_mask);
     generate_knight_moves(board, moves, check_mask, pin_mask);
     generate_sliding_moves(board, moves, check_mask, pin_mask);
-
     return moves;
 }
 void MoveGenerator::generate_pawn_moves(Board &board, std::vector<Move> &moves, Bitboard check_mask, Bitboard *pin_masks)
@@ -46,14 +45,14 @@ void MoveGenerator::generate_pawn_moves(Board &board, std::vector<Move> &moves, 
                 }
                 else
                     moves.emplace_back(source_square, target_square, pawn_type);
-                // Double move from starting position
-                if ((1ULL << source_square) & start_mask)
+            }
+            // Double move from starting position
+            if ((1ULL << source_square) & start_mask)
+            {
+                int double_move_square = source_square + 2 * direction;
+                if (((1ULL << double_move_square) & board.empty_squares) && ((1ULL << double_move_square) & allowed))
                 {
-                    int double_move_square = source_square + 2 * direction;
-                    if (((1ULL << double_move_square) & board.empty_squares) && ((1ULL << double_move_square) & allowed))
-                    {
-                        moves.emplace_back(source_square, double_move_square, pawn_type);
-                    }
+                    moves.emplace_back(source_square, double_move_square, pawn_type);
                 }
             }
         }
@@ -96,7 +95,7 @@ void MoveGenerator::generate_pawn_moves(Board &board, std::vector<Move> &moves, 
                 {
                     moves.emplace_back(move);
                 }
-                board.undo_move(move);
+                board.undo_move(move, false);
             }
         }
         // delete processed pawn
@@ -139,6 +138,10 @@ void MoveGenerator::generate_king_moves(Board &board, std::vector<Move> &moves)
     int source_square = __builtin_ctzll(king_mask);
     Bitboard attacks = king_attacks[source_square] & ~own_pieces_mask;
 
+    // Temporarily remove king from all_pieces to prevent it from blocking attacks (X-Ray fix)
+    Bitboard saved_all_pieces = board.all_pieces;
+    board.all_pieces &= ~(1ULL << source_square);
+
     while (attacks)
     {
         int target_square = __builtin_ctzll(attacks);
@@ -149,6 +152,9 @@ void MoveGenerator::generate_king_moves(Board &board, std::vector<Move> &moves)
         }
         attacks &= attacks - 1;
     }
+
+    // Restore all_pieces
+    board.all_pieces = saved_all_pieces;
 
     // Castling
     if (white_to_move)
@@ -243,20 +249,6 @@ void MoveGenerator::generate_sliding_moves(Board &board, std::vector<Move> &move
         }
     }
 }
-static long long perft(Board &board, int depth)
-{
-    long long result = 0;
-    if (depth == 0)
-        return 0;
-    std::vector<Move> moves = MoveGenerator::generate_moves(board);
-    for (const auto &move : moves)
-    {
-        board.make_move(move);
-        result += perft(board, depth - 1);
-        board.undo_move(move);
-    }
-    return result;
-}
 long long MoveGenerator::perft(Board &board, int depth)
 {
     if (depth == 0)
@@ -269,7 +261,7 @@ long long MoveGenerator::perft(Board &board, int depth)
     {
         board.make_move(move, false);
         nodes += perft(board, depth - 1);
-        board.undo_move(move);
+        board.undo_move(move, false);
     }
     return nodes;
 }
