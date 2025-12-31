@@ -42,7 +42,7 @@ public:
     Board();
     int get_piece_at(int pos);
     std::string export_fen_position(); // tbi
-    void make_move(const Move &move);
+    void make_move(const Move &move, bool update_state = true);
     void undo_move(const Move &move);
     void set_bit(int square, int piece);
     bool is_white_to_move() const { return white_to_move; }

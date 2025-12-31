@@ -40,7 +40,7 @@ void Board::set_bit(int square, int piece)
     // Update board array
     board_arr[square] = piece;
 }
-void Board::make_move(const Move &move)
+void Board::make_move(const Move &move, bool update_state)
 {
     history.push_back({castling_rights, enpassant_square, halfmove_clock, current_zobrist_key});
     int source = move.source;
@@ -197,7 +197,8 @@ void Board::make_move(const Move &move)
 
     white_to_move = !white_to_move;
     update_bitboards();
-    update_game_state();
+    if (update_state)
+        update_game_state();
 }
 void Board::undo_move(const Move &move)
 {

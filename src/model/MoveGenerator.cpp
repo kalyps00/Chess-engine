@@ -91,7 +91,7 @@ void MoveGenerator::generate_pawn_moves(Board &board, std::vector<Move> &moves, 
                 int ep_square = __builtin_ctzll(ep_attacks);
                 int captured_pawn = white_to_move ? BLACK_PAWN : WHITE_PAWN;
                 Move move(source_square, ep_square, pawn_type, captured_pawn, 0, 1);
-                board.make_move(move);
+                board.make_move(move, false);
                 if (!board.is_in_check(white_to_move))
                 {
                     moves.emplace_back(move);
@@ -242,4 +242,34 @@ void MoveGenerator::generate_sliding_moves(Board &board, std::vector<Move> &move
             pieces_mask &= pieces_mask - 1;
         }
     }
+}
+static long long perft(Board &board, int depth)
+{
+    long long result = 0;
+    if (depth == 0)
+        return 0;
+    std::vector<Move> moves = MoveGenerator::generate_moves(board);
+    for (const auto &move : moves)
+    {
+        board.make_move(move);
+        result += perft(board, depth - 1);
+        board.undo_move(move);
+    }
+    return result;
+}
+long long MoveGenerator::perft(Board &board, int depth)
+{
+    if (depth == 0)
+        return 1;
+
+    long long nodes = 0;
+    std::vector<Move> moves = generate_moves(board);
+
+    for (const auto &move : moves)
+    {
+        board.make_move(move, false);
+        nodes += perft(board, depth - 1);
+        board.undo_move(move);
+    }
+    return nodes;
 }

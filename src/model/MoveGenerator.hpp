@@ -9,6 +9,7 @@ class MoveGenerator
 {
 public:
     static std::vector<Move> generate_moves(Board &board);
+    static long long perft(Board &board, int depth);
 
 private:
     static void generate_pawn_moves(Board &board, std::vector<Move> &moves, Bitboard check_mask, Bitboard *pin_masks);
