@@ -465,6 +465,22 @@ bool Board::has_insufficient_material()
     return false;
 }
 
+bool Board::is_repetition()
+{
+    int count = 1;
+    int history_size = history.size();
+    for (int i = history_size - 2; i >= 0 && i >= history_size - halfmove_clock; i -= 2)
+    {
+        if (history[i].zobrist_position_key == current_zobrist_key)
+        {
+            count++;
+            if (count >= 3)
+                return true;
+        }
+    }
+    return false;
+}
+
 void Board::update_game_state()
 {
     current_legal_moves = MoveGenerator::generate_moves(*this);
@@ -483,7 +499,14 @@ void Board::update_game_state()
         return;
     }
 
-    // 3. Checkmate / Stalemate
+    // 3. Threefold repetition
+    if (is_repetition())
+    {
+        current_game_status = DRAW;
+        return;
+    }
+
+    // 4. Checkmate / Stalemate
     if (current_legal_moves.empty())
     {
         if (is_in_check(white_to_move))
@@ -499,4 +522,9 @@ void Board::update_game_state()
     {
         current_game_status = ONGOING;
     }
+}
+void Board::reset_game()
+{
+    current_game_status = ONGOING;
+    load_fen_position(*this, starting_fen);
 }

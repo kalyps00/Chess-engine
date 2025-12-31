@@ -90,11 +90,10 @@ Chess-engine/
 - [x] Choosing promotion piece
 - [x] "Game Over" Logic (Checkmate, Stalemate, 50-move rule, Insufficient Material)
 - [x] Loading position from FEN
-- [ ] **Threefold Repetition** (Requires Zobrist Hashing)
+- [x] Threefold Repetition (Requires Zobrist Hashing)
 - [ ] **Search Algorithm** (Minimax / Negamax with Alpha-Beta Pruning)
 - [ ] **Evaluation Function** (Material + Positional heuristics)
 - [ ] UCI Protocol (Universal Chess Interface)
-- [ ] Choosing playing side / Restart Game
 - [ ] Indicating last move
 
 ## ⚡ Optimizations to do

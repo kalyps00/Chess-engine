@@ -3,6 +3,7 @@
 #include "../model/MoveGenerator.hpp"
 #include <SFML/Graphics.hpp>
 #include <vector>
+#include "FenParser.hpp"
 
 class GameControler
 {
@@ -26,6 +27,7 @@ private:
     void render();
     void handleEvents();
     void check_game_over();
+    void restart_game();
 
 public:
     GameControler();

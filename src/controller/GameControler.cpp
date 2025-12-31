@@ -23,7 +23,15 @@ void GameControler::handleEvents()
     {
         if (event.type == sf::Event::Closed)
             window.close();
-
+        if (event.type == sf::Event::KeyPressed)
+        {
+            if (event.key.code == sf::Keyboard::R)
+                restart_game();
+        }
+        if (board.get_game_status() != ONGOING)
+        {
+            continue;
+        }
         if (isPromoting)
         {
             if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left)
@@ -198,4 +206,15 @@ void GameControler::check_game_over()
         else if (status == DRAW)
             std::cout << "Draw!" << '\n';
     }
+}
+void GameControler::restart_game()
+{
+    board.reset_game();
+    isDragging = false;
+    isPromoting = false;
+    draggedPiece = 0;
+    draggedSquare = -1;
+    promotionSource = -1;
+    promotionTarget = -1;
+    validMoves.clear();
 }
