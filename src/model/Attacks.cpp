@@ -7,7 +7,6 @@ Bitboard pawn_attacks[2][64];
 Bitboard king_attacks[64];
 Bitboard between[64][64];
 
-// Funkcje pomocnicze (prywatne dla tego pliku)
 static void init_knight_attacks();
 static void init_pawn_attacks();
 static void init_king_attacks();

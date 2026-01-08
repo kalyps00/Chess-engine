@@ -5,10 +5,13 @@
 #include <chrono>
 void test()
 {
+
     std::string kiwi = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ";
+    std::string pos4 = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
+    std::string pos5 = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8  ";
     Board test_board;
     load_fen_position(test_board, kiwi);
-    int depth = 5;
+    int depth = 3;
 
     std::cout << "Perft test depth: " << depth << std::endl;
     auto start = std::chrono::high_resolution_clock::now();
