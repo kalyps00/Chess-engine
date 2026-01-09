@@ -11,7 +11,7 @@ void test()
     std::string pos5 = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8  ";
     Board test_board;
     load_fen_position(test_board, kiwi);
-    int depth = 4;
+    int depth = 5;
 
     std::cout << "Perft test depth: " << depth << std::endl;
     auto start = std::chrono::high_resolution_clock::now();

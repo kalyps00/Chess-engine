@@ -1,11 +1,13 @@
 #include "MoveGenerator.hpp"
 #include "Attacks.hpp"
+#include <cstring>
 
 std::vector<Move> MoveGenerator::generate_moves(Board &board)
 {
     std::vector<Move> moves;
     moves.reserve(256);
     Bitboard pin_mask[64];
+    memset(pin_mask, 0xFF, sizeof(pin_mask));
     board.get_pin_masks(board.white_to_move, pin_mask);
     Bitboard check_mask = board.get_check_mask(board.white_to_move);
     generate_king_moves(board, moves);
@@ -256,7 +258,9 @@ long long MoveGenerator::perft(Board &board, int depth)
 
     long long nodes = 0;
     std::vector<Move> moves = generate_moves(board);
-
+    // Bulk counting
+    if (depth == 1)
+        return moves.size();
     for (const auto &move : moves)
     {
         board.make_move(move, false);

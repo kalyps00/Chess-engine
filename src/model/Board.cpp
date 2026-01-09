@@ -417,10 +417,6 @@ Bitboard Board::get_check_mask(bool white_to_move)
 // repetetive code
 void Board::get_pin_masks(bool white_to_move, Bitboard *pin_masks)
 {
-    // Default
-    for (int i = 0; i < 64; i++)
-        pin_masks[i] = ~0ULL;
-
     int king_sq = __builtin_ctzll(bitboards[white_to_move ? WHITE_KING : BLACK_KING]);
     Bitboard my_pieces = white_to_move ? white_pieces : black_pieces;
     Bitboard op_rooks = bitboards[white_to_move ? BLACK_ROOK : WHITE_ROOK] | bitboards[white_to_move ? BLACK_QUEEN : WHITE_QUEEN];
