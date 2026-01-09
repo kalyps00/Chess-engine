@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include "Types.hpp"
+#include "Attacks.hpp"
 
 class MoveGenerator;
 
@@ -25,7 +26,29 @@ private:
         enpassant_square;
     void update_bitboards();
     int castling_rights; // bit 0: white king-side, bit 1: white queen-side, bit 2: black king-side, bit 3: black queen-side
-    bool is_square_attacked(int square, bool by_white);
+
+    inline bool is_square_attacked(int square, bool by_white)
+    {
+        // Pawn attacks
+        if (pawn_attacks[by_white ? 1 : 0][square] & bitboards[by_white ? WHITE_PAWN : BLACK_PAWN])
+            return true;
+        // Knight attacks
+        if (knight_attacks[square] & bitboards[by_white ? WHITE_KNIGHT : BLACK_KNIGHT])
+            return true;
+        // King attacks
+        if (king_attacks[square] & bitboards[by_white ? WHITE_KING : BLACK_KING])
+            return true;
+        // Bishop/Queen attacks (diagonal)
+        Bitboard bishops_queens = bitboards[by_white ? WHITE_BISHOP : BLACK_BISHOP] | bitboards[by_white ? WHITE_QUEEN : BLACK_QUEEN];
+        if (get_bishop_attacks(square, all_pieces) & bishops_queens)
+            return true;
+        // Rook/Queen attacks (straight)
+        Bitboard rooks_queens = bitboards[by_white ? WHITE_ROOK : BLACK_ROOK] | bitboards[by_white ? WHITE_QUEEN : BLACK_QUEEN];
+        if (get_rook_attacks(square, all_pieces) & rooks_queens)
+            return true;
+        return false;
+    }
+
     bool is_in_check(bool white_to_move);
     // Game state
     bool white_to_move;

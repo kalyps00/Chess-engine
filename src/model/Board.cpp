@@ -350,44 +350,6 @@ void Board::undo_move(const Move &move, bool update_state)
     if (update_state)
         update_game_state();
 }
-bool Board::is_square_attacked(int square, bool by_white)
-{
-    // Check pawn attacks
-    if (by_white)
-    {
-        // To check if 'square' is attacked by a WHITE pawn (which attacks upwards),
-        // we check if there is a WHITE pawn on the squares that a BLACK pawn at 'square' would attack (downwards).
-        if (pawn_attacks[1][square] & bitboards[WHITE_PAWN])
-            return true;
-    }
-    else
-    {
-        // To check if 'square' is attacked by a BLACK pawn (which attacks downwards),
-        // we check if there is a BLACK pawn on the squares that a WHITE pawn at 'square' would attack (upwards).
-        if (pawn_attacks[0][square] & bitboards[BLACK_PAWN])
-            return true;
-    }
-
-    // Check knight attacks
-    if (knight_attacks[square] & bitboards[by_white ? WHITE_KNIGHT : BLACK_KNIGHT])
-        return true;
-
-    // Check king attacks
-    if (king_attacks[square] & bitboards[by_white ? WHITE_KING : BLACK_KING])
-        return true;
-
-    // Check bishop/queen attacks (diagonal)
-    Bitboard bishops_queens = bitboards[by_white ? WHITE_BISHOP : BLACK_BISHOP] | bitboards[by_white ? WHITE_QUEEN : BLACK_QUEEN];
-    if (get_bishop_attacks(square, all_pieces) & bishops_queens)
-        return true;
-
-    // Check rook/queen attacks (straight)
-    Bitboard rooks_queens = bitboards[by_white ? WHITE_ROOK : BLACK_ROOK] | bitboards[by_white ? WHITE_QUEEN : BLACK_QUEEN];
-    if (get_rook_attacks(square, all_pieces) & rooks_queens)
-        return true;
-
-    return false;
-}
 bool Board::is_in_check(bool white_to_move)
 {
     int king_square = __builtin_ctzll(bitboards[white_to_move ? WHITE_KING : BLACK_KING]);
