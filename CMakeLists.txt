@@ -111,3 +111,4 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${SRC_DIR}/view
     ${SRC_DIR}/controller
 )
+#cmake --build build --config Release/Debug

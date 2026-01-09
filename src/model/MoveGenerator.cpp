@@ -30,7 +30,7 @@ void MoveGenerator::generate_pawn_moves(Board &board, std::vector<Move> &moves, 
         int target_square = source_square + direction;
         Bitboard allowed = check_mask & pin_masks[source_square];
 
-        if ((1ULL << target_square) & board.empty_squares)
+        if ((1ULL << target_square) & (~board.all_pieces))
         {
             // if in check or pinned
             if ((1ULL << target_square) & allowed)
@@ -50,7 +50,7 @@ void MoveGenerator::generate_pawn_moves(Board &board, std::vector<Move> &moves, 
             if ((1ULL << source_square) & start_mask)
             {
                 int double_move_square = source_square + 2 * direction;
-                if (((1ULL << double_move_square) & board.empty_squares) && ((1ULL << double_move_square) & allowed))
+                if (((1ULL << double_move_square) & (~board.all_pieces)) && ((1ULL << double_move_square) & allowed))
                 {
                     moves.emplace_back(source_square, double_move_square, pawn_type);
                 }

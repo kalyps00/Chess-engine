@@ -82,15 +82,29 @@ void Board::make_move(const Move &move, bool update_state)
             castling_rights &= ~0b1000;
     }
     // Remove piece from source
+    Bitboard fromMask = 1ULL << source;
+    Bitboard toMask = 1ULL << destination;
     current_zobrist_key ^= piece_keys[piece][source];
-    bitboards[piece] &= ~(1ULL << source);
+    bitboards[piece] &= ~fromMask;
     board_arr[source] = EMPTY;
+    // Incremental update: remove from source
+    all_pieces ^= fromMask;
+    if (white_to_move)
+        white_pieces ^= fromMask;
+    else
+        black_pieces ^= fromMask;
 
     if (captured != EMPTY && move.enpassant == 0)
     {
         // Remove captured piece
         current_zobrist_key ^= piece_keys[captured][destination];
-        bitboards[captured] &= ~(1ULL << destination);
+        bitboards[captured] &= ~toMask;
+        // Incremental update: remove captured
+        all_pieces ^= toMask;
+        if (!white_to_move)
+            white_pieces ^= toMask;
+        else
+            black_pieces ^= toMask;
 
         // Update castling rights if a rook is captured
         if (captured == WHITE_ROOK)
@@ -118,12 +132,19 @@ void Board::make_move(const Move &move, bool update_state)
             int rook_piece = (piece == WHITE_KING) ? WHITE_ROOK : BLACK_ROOK;
 
             // Move rook
+            Bitboard rookFrom = 1ULL << rook_src;
+            Bitboard rookTo = 1ULL << rook_dst;
             current_zobrist_key ^= piece_keys[rook_piece][rook_src];
             current_zobrist_key ^= piece_keys[rook_piece][rook_dst];
-            bitboards[rook_piece] &= ~(1ULL << rook_src);
-            bitboards[rook_piece] |= (1ULL << rook_dst);
+            bitboards[rook_piece] ^= rookFrom | rookTo;
             board_arr[rook_src] = EMPTY;
             board_arr[rook_dst] = rook_piece;
+            // Incremental update: rook move
+            all_pieces ^= rookFrom | rookTo;
+            if (white_to_move)
+                white_pieces ^= rookFrom | rookTo;
+            else
+                black_pieces ^= rookFrom | rookTo;
         }
         // queen side
         else if (move.castle == 2)
@@ -133,20 +154,33 @@ void Board::make_move(const Move &move, bool update_state)
             int rook_piece = (piece == WHITE_KING) ? WHITE_ROOK : BLACK_ROOK;
 
             // Move rook
+            Bitboard rookFrom = 1ULL << rook_src;
+            Bitboard rookTo = 1ULL << rook_dst;
             current_zobrist_key ^= piece_keys[rook_piece][rook_src];
             current_zobrist_key ^= piece_keys[rook_piece][rook_dst];
-            bitboards[rook_piece] &= ~(1ULL << rook_src);
-            bitboards[rook_piece] |= (1ULL << rook_dst);
+            bitboards[rook_piece] ^= rookFrom | rookTo;
             board_arr[rook_src] = EMPTY;
             board_arr[rook_dst] = rook_piece;
+            // Incremental update: rook move
+            all_pieces ^= rookFrom | rookTo;
+            if (white_to_move)
+                white_pieces ^= rookFrom | rookTo;
+            else
+                black_pieces ^= rookFrom | rookTo;
         }
     }
 
     // Place piece at destination
     int pieceToPlace = (move.promotion != 0) ? move.promotion : piece;
     current_zobrist_key ^= piece_keys[pieceToPlace][destination];
-    bitboards[pieceToPlace] |= (1ULL << destination);
+    bitboards[pieceToPlace] |= toMask;
     board_arr[destination] = pieceToPlace;
+    // Incremental update: add to destination
+    all_pieces |= toMask;
+    if (white_to_move)
+        white_pieces |= toMask;
+    else
+        black_pieces |= toMask;
     // update  clock moves
     halfmove_clock = move.captured != 0 ? 0 : halfmove_clock + 1;
     if (white_to_move == false)
@@ -170,9 +204,16 @@ void Board::make_move(const Move &move, bool update_state)
         else if (old_enpassant_mask && (1ULL << destination) == old_enpassant_mask)
         {
             int captured_pawn_sq = (piece == WHITE_PAWN) ? destination - 8 : destination + 8;
+            Bitboard epCapMask = 1ULL << captured_pawn_sq;
             current_zobrist_key ^= piece_keys[captured][captured_pawn_sq];
-            bitboards[captured] &= ~(1ULL << captured_pawn_sq);
+            bitboards[captured] &= ~epCapMask;
             board_arr[captured_pawn_sq] = EMPTY;
+            // Incremental update: remove en passant captured pawn
+            all_pieces ^= epCapMask;
+            if (!white_to_move)
+                white_pieces ^= epCapMask;
+            else
+                black_pieces ^= epCapMask;
         }
         // update here for perforamnce
         halfmove_clock = 0;
@@ -196,7 +237,6 @@ void Board::make_move(const Move &move, bool update_state)
     current_zobrist_key ^= side_key;
 
     white_to_move = !white_to_move;
-    update_bitboards();
     if (update_state)
         update_game_state();
 }
@@ -224,32 +264,60 @@ void Board::undo_move(const Move &move, bool update_state)
     }
 
     // remove piece
+    Bitboard fromMask = 1ULL << source;
+    Bitboard toMask = 1ULL << destination;
     if (move.promotion)
     {
         piece = white_to_move ? WHITE_PAWN : BLACK_PAWN;
-        bitboards[move.promotion] &= ~(1ULL << destination);
+        bitboards[move.promotion] &= ~toMask;
     }
     else
     {
-        bitboards[piece] &= ~(1ULL << destination);
+        bitboards[piece] &= ~toMask;
     }
     board_arr[destination] = EMPTY;
+    // Incremental update: remove from destination
+    all_pieces ^= toMask;
+    if (white_to_move)
+        white_pieces ^= toMask;
+    else
+        black_pieces ^= toMask;
+
     // place piece at source square
-    bitboards[piece] |= (1ULL << source);
+    bitboards[piece] |= fromMask;
     board_arr[source] = piece;
+    // Incremental update: add to source
+    all_pieces |= fromMask;
+    if (white_to_move)
+        white_pieces |= fromMask;
+    else
+        black_pieces |= fromMask;
 
     // place captured piece
     if (move.captured != EMPTY && !move.enpassant)
     {
-        bitboards[move.captured] |= (1ULL << destination);
+        bitboards[move.captured] |= toMask;
         board_arr[destination] = move.captured;
+        // Incremental update: restore captured
+        all_pieces |= toMask;
+        if (!white_to_move)
+            white_pieces |= toMask;
+        else
+            black_pieces |= toMask;
     }
     // enpasant
     if (move.enpassant)
     {
         int captured_sq = (white_to_move ? destination - 8 : destination + 8);
-        bitboards[move.captured] |= (1ULL << captured_sq);
+        Bitboard epMask = 1ULL << captured_sq;
+        bitboards[move.captured] |= epMask;
         board_arr[captured_sq] = move.captured;
+        // Incremental update: restore en passant captured
+        all_pieces |= epMask;
+        if (!white_to_move)
+            white_pieces |= epMask;
+        else
+            black_pieces |= epMask;
     }
     // casting
     if (move.castle)
@@ -267,13 +335,18 @@ void Board::undo_move(const Move &move, bool update_state)
             rook_src = (white_to_move ? a1 : a8);
         }
         // remove rook king was moved in upper part
-        bitboards[rook_piece] &= ~(1ULL << rook_dst);
+        Bitboard rookFrom = 1ULL << rook_src;
+        Bitboard rookTo = 1ULL << rook_dst;
+        bitboards[rook_piece] ^= rookFrom | rookTo;
         board_arr[rook_dst] = EMPTY;
-        // place rook
-        bitboards[rook_piece] |= (1ULL << rook_src);
         board_arr[rook_src] = rook_piece;
+        // Incremental update: rook undo
+        all_pieces ^= rookFrom | rookTo;
+        if (white_to_move)
+            white_pieces ^= rookFrom | rookTo;
+        else
+            black_pieces ^= rookFrom | rookTo;
     }
-    update_bitboards();
     if (update_state)
         update_game_state();
 }
@@ -326,7 +399,6 @@ void Board::update_bitboards()
     white_pieces = 0ULL;
     black_pieces = 0ULL;
     all_pieces = 0ULL;
-    empty_squares = 0ULL;
 
     for (int i = 1; i <= 6; i++)
     {
@@ -337,7 +409,6 @@ void Board::update_bitboards()
         black_pieces |= bitboards[i];
     }
     all_pieces = white_pieces | black_pieces;
-    empty_squares = ~all_pieces;
 }
 Bitboard Board::get_attackers(int square, bool white_attacker)
 {

@@ -22,7 +22,6 @@ private:
         white_pieces, // 1-5
         black_pieces, // 6-12
         all_pieces,
-        empty_squares,
         enpassant_square;
     void update_bitboards();
     int castling_rights; // bit 0: white king-side, bit 1: white queen-side, bit 2: black king-side, bit 3: black queen-side
