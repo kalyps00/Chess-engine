@@ -9,8 +9,11 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Flagi kompilacji - włącza wszystkie ostrzeżenia i informacje debug
-set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -Wextra -Wpedantic")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+# Debug: pełne symbole, bez optymalizacji, sanitizers do wyłapywania błędów
+set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -Wall -Wextra -Wpedantic -fsanitize=address")
+
+# Release: pełna optymalizacja, LTO, CPU-specific optimizations
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -march=native -flto")
 
 # Generowanie compile_commands.json dla IntelliSense
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -31,6 +34,7 @@ set(SOURCES
     ${SRC_DIR}/model/Board.cpp
     ${SRC_DIR}/model/MoveGenerator.cpp
     ${SRC_DIR}/model/Attacks.cpp
+    ${SRC_DIR}/model/Magics.cpp
     ${SRC_DIR}/model/FenParser.cpp
     ${SRC_DIR}/model/Zobrist.cpp
     # View - interfejs graficzny
@@ -45,6 +49,7 @@ set(HEADERS
     ${SRC_DIR}/model/Board.hpp
     ${SRC_DIR}/model/Types.hpp
     ${SRC_DIR}/model/Attacks.hpp
+    ${SRC_DIR}/model/Magics.hpp
     ${SRC_DIR}/model/FenParser.hpp
     ${SRC_DIR}/model/Zobrist.hpp
     # View headers  

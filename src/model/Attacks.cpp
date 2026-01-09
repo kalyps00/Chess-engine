@@ -1,4 +1,5 @@
 #include "Attacks.hpp"
+#include "Magics.hpp"
 #include <cmath>
 #include <cstdlib>
 
@@ -20,7 +21,7 @@ void init_attacks()
     init_between();
 }
 
-Bitboard get_rook_attacks(int square, Bitboard occupied)
+Bitboard get_rook_attacks_slow(int square, Bitboard occupied)
 {
     int directions[4] = {8, -8, 1, -1}; // Up, Down, Right, Left
     Bitboard attacks = 0ULL;
@@ -49,7 +50,7 @@ Bitboard get_rook_attacks(int square, Bitboard occupied)
     return attacks;
 }
 
-Bitboard get_bishop_attacks(int square, Bitboard occupied)
+Bitboard get_bishop_attacks_slow(int square, Bitboard occupied)
 {
     int directions[4] = {9, 7, -9, -7}; // Up-Right, Up-Left, Down-Right, Down-Left
     Bitboard attacks = 0ULL;
@@ -78,7 +79,7 @@ Bitboard get_bishop_attacks(int square, Bitboard occupied)
     return attacks;
 }
 
-Bitboard get_queen_attacks(int square, Bitboard occupied)
+Bitboard get_queen_attacks_slow(int square, Bitboard occupied)
 {
     return get_rook_attacks(square, occupied) | get_bishop_attacks(square, occupied);
 }
