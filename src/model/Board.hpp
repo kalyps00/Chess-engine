@@ -49,7 +49,11 @@ private:
         return false;
     }
 
-    bool is_in_check(bool white_to_move);
+    inline bool is_in_check(bool white_to_move)
+    {
+        int king_square = __builtin_ctzll(bitboards[white_to_move ? WHITE_KING : BLACK_KING]);
+        return is_square_attacked(king_square, !white_to_move);
+    }
     // Game state
     bool white_to_move;
     int halfmove_clock = 0;
@@ -62,7 +66,12 @@ private:
 
 public:
     Board();
-    int get_piece_at(int pos);
+    inline int get_piece_at(int pos)
+    {
+        if (pos < 0 || pos >= 64)
+            return 0;
+        return board_arr[pos];
+    }
     std::string export_fen_position(); // tbi
     void make_move(const Move &move, bool update_state = true);
     void undo_move(const Move &move, bool update_state = true);

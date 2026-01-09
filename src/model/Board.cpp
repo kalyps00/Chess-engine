@@ -24,12 +24,6 @@ Board::Board()
 
     load_fen_position(*this, starting_fen);
 }
-int Board::get_piece_at(int pos)
-{
-    if (pos < 0 || pos >= 64)
-        return 0;
-    return board_arr[pos];
-}
 
 void Board::set_bit(int square, int piece)
 {
@@ -349,11 +343,6 @@ void Board::undo_move(const Move &move, bool update_state)
     }
     if (update_state)
         update_game_state();
-}
-bool Board::is_in_check(bool white_to_move)
-{
-    int king_square = __builtin_ctzll(bitboards[white_to_move ? WHITE_KING : BLACK_KING]);
-    return is_square_attacked(king_square, !white_to_move);
 }
 // tbi update only changed squares
 void Board::update_bitboards()

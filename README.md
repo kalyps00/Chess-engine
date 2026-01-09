@@ -101,7 +101,8 @@ Chess-engine/
 - [x] **Zobrist Hashing** (Fast position comparison & Transposition Table key)
 - [ ] **Transposition Table** (Caching search results)
 - [ ] **Move Ordering** (MVV-LVA, Killer Moves, History Heuristic)
-- [ ] **Magic Bitboards** (Faster sliding piece attack generation)
+- [x] **Magic Bitboards** (Faster sliding piece attack generation)
 - [ ] **Quiescence Search** (Solving horizon effect in tactical positions)
 - [ ] **Iterative Deepening** (Time management)
-- [ ] Incremental Updates
+- [x] Incremental Updates
+- [ ] Lazy SMP
