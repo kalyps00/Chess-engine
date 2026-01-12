@@ -73,6 +73,7 @@ Chess-engine/
 ├── src/
 │   ├── controller/         # Control logic (GameControler)
 │   ├── model/              # Game logic (Board, MoveGenerator, Bitboards)
+│   ├── engine              # Search and evaluation
 │   ├── view/               # Rendering (BoardRender)
 │   └── main.cpp            # Entry point
 ├── CMakeLists.txt          # Build configuration
@@ -99,10 +100,11 @@ Chess-engine/
 ## ⚡ Optimizations to do
 
 - [x] **Zobrist Hashing** (Fast position comparison & Transposition Table key)
+- [x] Incremental Updates
+- [x] **Magic Bitboards** (Faster sliding piece attack generation)
 - [ ] **Transposition Table** (Caching search results)
 - [ ] **Move Ordering** (MVV-LVA, Killer Moves, History Heuristic)
-- [x] **Magic Bitboards** (Faster sliding piece attack generation)
+- [ ] **Fancy Magic Bitboards** for better cache
 - [ ] **Quiescence Search** (Solving horizon effect in tactical positions)
 - [ ] **Iterative Deepening** (Time management)
-- [x] Incremental Updates
 - [ ] Lazy SMP
